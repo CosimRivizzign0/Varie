@@ -1,20 +1,13 @@
 {
+  "enabledPlugins": {
+    "linkedin-skills@linkedin-skills": true
+  },
   "extraKnownMarketplaces": {
     "linkedin-skills": {
       "source": {
         "source": "github",
         "repo": "sergebulaev/linkedin-skills"
       }
-    },
-    "cosimo-plugins": {
-      "source": {
-        "source": "github",
-        "repo": "CosimRivizzign0/Varie"
-      }
     }
-  },
-  "enabledPlugins": {
-    "linkedin-skills@linkedin-skills": true,
-    "cosimo-linkedin@cosimo-plugins": true
   }
 }
