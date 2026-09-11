@@ -1,0 +1,25 @@
+{
+  "name": "cosimo-plugins",
+  "owner": {
+    "name": "Cosimo Rivizzigno",
+    "url": "https://github.com/CosimRivizzign0"
+  },
+  "description": "Plugin Claude Code di Cosimo Rivizzigno: scrittura e contenuti nella sua voce, senza dipendenze da API di pubblicazione esterne.",
+  "plugins": [
+    {
+      "name": "cosimo-linkedin",
+      "source": "./plugins/cosimo-linkedin",
+      "displayName": "Cosimo LinkedIn",
+      "description": "Sei skill per LinkedIn in italiano, scritte sulla voce di Cosimo Rivizzigno: post, commenti, risposte, piano editoriale, profilo e il riscrittore anti-stile-AI. Solo bozze: la pubblicazione resta manuale, nessun token o API di terze parti.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Cosimo Rivizzigno",
+        "url": "https://github.com/CosimRivizzign0"
+      },
+      "homepage": "https://github.com/CosimRivizzign0/Varie",
+      "license": "MIT",
+      "keywords": ["linkedin", "scrittura", "italiano", "personal-branding", "contenuti"],
+      "category": "productivity"
+    }
+  ]
+}

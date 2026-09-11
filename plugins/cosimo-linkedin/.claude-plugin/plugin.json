@@ -1,0 +1,12 @@
+{
+  "name": "cosimo-linkedin",
+  "description": "Sei skill per LinkedIn in italiano, scritte sulla voce di Cosimo Rivizzigno: post, commenti, risposte, piano editoriale, profilo e il riscrittore anti-stile-AI. Produce solo bozze: la pubblicazione resta manuale, nessuna API o token di terze parti.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Cosimo Rivizzigno",
+    "url": "https://github.com/CosimRivizzign0"
+  },
+  "homepage": "https://github.com/CosimRivizzign0/Varie",
+  "license": "MIT",
+  "keywords": ["linkedin", "scrittura", "italiano", "personal-branding", "contenuti"]
+}
