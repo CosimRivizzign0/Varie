@@ -1,0 +1,843 @@
+<title>Laboratorio di Bilancio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: registro contabile — barra di percorso numerata (è davvero una sequenza didattica), pannelli a due colonne Impieghi | Fonti */
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --ink:#15221C; --muted:#5A6A62; --line:#D3DCD6;
+  --accent:#0E6B53; --accent-soft:#DCEFE6; --fonti:#2F4F8F; --fonti-soft:#E1E8F6;
+  --good:#1D7A4C; --warn:#A86A12; --bad:#B42318;
+  --good-soft:#DDF1E5; --warn-soft:#FBEED8; --bad-soft:#FBE1DE;
+  --s1:#0E6B53; --s2:#3E9677; --s3:#7DBFA3; --s4:#B7DFCC;
+  --f1:#2F4F8F; --f2:#5A7BC0; --f3:#9DB4E3;
+  --ts1:#FFFFFF; --ts2:#FFFFFF; --ts3:#10201A; --ts4:#10201A; --tf1:#FFFFFF; --tf2:#FFFFFF; --tf3:#10201A;
+  --font-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-data:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1613; --surface:#16211C; --ink:#E4EDE8; --muted:#97A99F; --line:#2A3A33;
+  --accent:#4CC29A; --accent-soft:#173A2E; --fonti:#93B2F0; --fonti-soft:#1C2A45;
+  --good:#52C78F; --warn:#E6AE4E; --bad:#F2776C;
+  --good-soft:#163627; --warn-soft:#3A2C12; --bad-soft:#3E1C19;
+  --s1:#2FA47F; --s2:#4CC29A; --s3:#80D6B7; --s4:#B5E8D4;
+  --f1:#5F84D6; --f2:#86A5E6; --f3:#B4C8F0;
+  --ts1:#FFFFFF; --ts2:#0B1A14; --ts3:#0B1A14; --ts4:#0B1A14; --tf1:#FFFFFF; --tf2:#0B1A14; --tf3:#0B1A14;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#0E1613; --surface:#16211C; --ink:#E4EDE8; --muted:#97A99F; --line:#2A3A33;
+  --accent:#4CC29A; --accent-soft:#173A2E; --fonti:#93B2F0; --fonti-soft:#1C2A45;
+  --good:#52C78F; --warn:#E6AE4E; --bad:#F2776C;
+  --good-soft:#163627; --warn-soft:#3A2C12; --bad-soft:#3E1C19;
+  --s1:#2FA47F; --s2:#4CC29A; --s3:#80D6B7; --s4:#B5E8D4;
+  --f1:#5F84D6; --f2:#86A5E6; --f3:#B4C8F0;
+  --ts1:#FFFFFF; --ts2:#0B1A14; --ts3:#0B1A14; --ts4:#0B1A14; --tf1:#FFFFFF; --tf2:#0B1A14; --tf3:#0B1A14;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 48px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.6rem,3.2vw,2.3rem);font-weight:700}
+h2{font-size:1.45rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:0}
+.num,.mono{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;padding-block:24px 16px}
+.eyebrow{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.company{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.company input{font:600 1rem var(--font-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 10px;width:16rem;max-width:100%}
+.tag{display:inline-block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-weight:700}
+
+nav.path{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:24px}
+.path-scroll{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:thin}
+.path button{flex:0 0 auto;display:flex;gap:8px;align-items:center;border:1px solid transparent;background:none;color:var(--muted);
+  font:600 .95rem var(--font-body);padding:8px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.path button .n{font-family:var(--font-data);font-size:.78rem;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line)}
+.path button:hover{color:var(--ink);background:var(--surface)}
+.path button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+.path button[aria-selected="true"] .n{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+section.tab{display:grid;gap:20px}
+.intro{display:grid;gap:6px;max-width:72ch}
+.intro p{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:860px){.grid2,.grid3{grid-template-columns:minmax(0,1fr)}}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px;position:relative;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.kpi:hover{border-color:var(--accent)}
+.kpi .v{font-family:var(--font-data);font-size:1.45rem;font-weight:500}
+.kpi .l{font-size:.85rem;color:var(--muted);font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:2px 9px;border-radius:99px;width:max-content}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.neutral{background:var(--accent-soft);color:var(--muted)}
+
+.diagnosi{display:grid;gap:10px}
+.diag{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px 14px;border-radius:8px;border:1px solid var(--line)}
+.diag .ttl{font-weight:700}
+.diag p{color:var(--muted)}
+
+/* tabelle */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+td.r,th.r{text-align:right}
+tr.tot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none}
+tr.sub td{font-weight:700;background:var(--accent-soft)}
+tr.sec td{font-family:var(--font-display);font-weight:700;padding-top:16px;color:var(--accent);border-bottom:1px solid var(--accent)}
+tr.sec.f td{color:var(--fonti);border-bottom-color:var(--fonti)}
+
+/* input bilancio */
+.voce{display:grid;grid-template-columns:minmax(0,1fr) 9.5rem;gap:4px 12px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.voce label{font-size:.93rem;min-width:0}
+.voce .dest{grid-column:1;font-size:.75rem;color:var(--muted)}
+.voce .dest b{color:var(--accent);font-weight:700}
+.voce .dest b.f{color:var(--fonti)}
+.voce input{grid-row:1 / span 2;grid-column:2;width:100%;text-align:right;font:500 .95rem var(--font-data);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.voce input[readonly]{background:var(--accent-soft);border-style:dashed}
+.blockh{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:18px 0 4px;flex-wrap:wrap}
+.blockh:first-child{margin-top:0}
+.blockh h3{color:var(--accent)}
+.blockh.f h3{color:var(--fonti)}
+.quadra{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:600 .9rem var(--font-body);padding:8px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:hover{filter:brightness(1.08)}
+
+/* aggregati espandibili */
+details.agg{border-bottom:1px solid var(--line)}
+details.agg summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:14px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 4px}
+details.agg summary::-webkit-details-marker{display:none}
+details.agg summary .sw{width:14px;height:14px;border-radius:3px}
+details.agg summary .chev{font-family:var(--font-data);color:var(--muted);transition:transform .15s}
+details.agg[open] summary .chev{transform:rotate(90deg)}
+details.agg .comp{padding:0 4px 12px 28px;display:grid;gap:4px;font-size:.88rem;color:var(--muted)}
+details.agg .comp div{display:flex;justify-content:space-between;gap:12px}
+.aggtot{display:flex;justify-content:space-between;padding:12px 4px;font-weight:700;border-top:2px solid var(--ink)}
+.pct{color:var(--muted);font-size:.8rem;min-width:3.6rem;text-align:right}
+
+.chart svg{width:100%;height:auto;display:block}
+.chart text{font-family:var(--font-body)}
+.note{font-size:.85rem;color:var(--muted);padding:10px 12px;border-left:3px solid var(--line);background:var(--bg);border-radius:0 6px 6px 0}
+.note b{color:var(--ink)}
+
+/* margini */
+.marg{display:grid;gap:8px}
+.marg .big{font-family:var(--font-data);font-size:1.6rem}
+.marg .f{font-size:.85rem;color:var(--muted)}
+.eq{font-family:var(--font-data);font-size:.85rem;background:var(--bg);padding:8px 10px;border-radius:6px;overflow-x:auto;white-space:nowrap}
+
+/* indici */
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:600 .85rem var(--font-body);padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.idx{display:grid;gap:10px;align-content:start}
+.idx .head{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.idx .val{font-family:var(--font-data);font-size:1.7rem;line-height:1}
+.idx .grp{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.idx details summary{cursor:pointer;font-size:.85rem;color:var(--accent);font-weight:600}
+.idx details p{font-size:.9rem;color:var(--muted);margin-top:6px}
+.frac{display:inline-grid;text-align:center;vertical-align:middle;font-family:var(--font-data);font-size:.82rem}
+.frac span:first-child{border-bottom:1px solid var(--ink);padding:0 4px}
+.gauge{height:8px;border-radius:99px;background:var(--bg);position:relative;overflow:hidden;border:1px solid var(--line)}
+.gauge i{position:absolute;inset:0 auto 0 0;border-radius:99px}
+
+/* dupont */
+.tree{display:grid;gap:14px;justify-items:center}
+.tree .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.node{border:1px solid var(--line);border-radius:8px;padding:8px 12px;text-align:center;background:var(--bg);min-width:7.5rem}
+.node .nv{font-family:var(--font-data);font-size:1.1rem}
+.node .nl{font-size:.78rem;color:var(--muted)}
+.node.main{border-color:var(--accent);background:var(--accent-soft)}
+.op{font-family:var(--font-data);color:var(--muted);font-size:1.2rem}
+
+/* simulatore */
+.slider{display:grid;gap:4px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.slider .top{display:flex;justify-content:space-between;gap:10px;font-size:.93rem}
+.slider input[type=range]{width:100%;accent-color:var(--accent)}
+.slider small{color:var(--muted);font-size:.8rem}
+.delta.up{color:var(--good)} .delta.down{color:var(--bad)} .delta.eq{color:var(--muted)}
+
+/* quiz */
+.q{display:grid;gap:12px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt.ok{border-color:var(--good);background:var(--good-soft)}
+.opt.ko{border-color:var(--bad);background:var(--bad-soft)}
+.feedback{padding:12px;border-radius:8px;font-size:.93rem}
+.feedback.ok{background:var(--good-soft)} .feedback.ko{background:var(--bad-soft)}
+.answer{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.answer input{font:500 1rem var(--font-data);padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:10rem}
+.score{font-family:var(--font-data)}
+footer{margin-top:32px;font-size:.82rem;color:var(--muted);max-width:80ch}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div style="display:grid;gap:6px">
+      <span class="eyebrow">Ragioneria · analisi di bilancio interattiva</span>
+      <h1>Laboratorio di Bilancio</h1>
+    </div>
+    <div class="company">
+      <label for="azienda" class="eyebrow">Azienda</label>
+      <input id="azienda" value="Alfa S.r.l.">
+      <span class="tag" id="tagEsempio">Dati di esempio</span>
+    </div>
+  </header>
+
+  <nav class="path" aria-label="Percorso">
+    <div class="path-scroll" role="tablist" id="tabs"></div>
+  </nav>
+
+  <main id="main"></main>
+
+  <footer>
+    Strumento didattico. Schemi di riferimento: Stato patrimoniale art. 2424 c.c. e Conto economico art. 2425 c.c. (versione post D.Lgs. 139/2015, senza area straordinaria).
+    Le soglie dei semafori sono <b>orientamenti didattici</b> diffusi nei manuali, non norme: vanno sempre lette rispetto al settore e al confronto nel tempo.
+  </footer>
+</div>
+
+<script>
+/* ============ DEFINIZIONE VOCI ============ */
+const AGG = {
+  imm:   {l:"Immobilizzazioni", side:"A", c:"--s1", tc:"--ts1", info:"Impieghi che tornano in forma liquida oltre 12 mesi (attivo fisso)."},
+  disp:  {l:"Disponibilità (magazzino)", side:"A", c:"--s2", tc:"--ts2", info:"Rimanenze: diventeranno liquide solo dopo essere vendute e incassate."},
+  ldiff: {l:"Liquidità differite", side:"A", c:"--s3", tc:"--ts3", info:"Crediti e altre attività che diventano denaro entro 12 mesi."},
+  limm:  {l:"Liquidità immediate", side:"A", c:"--s4", tc:"--ts4", info:"Denaro in cassa e in banca, subito disponibile."},
+  pn:    {l:"Patrimonio netto", side:"P", c:"--f1", tc:"--tf1", info:"Mezzi propri: capitale dei soci più riserve e utile non distribuito."},
+  pcons: {l:"Passività consolidate", side:"P", c:"--f2", tc:"--tf2", info:"Debiti da rimborsare oltre 12 mesi: fonti durevoli."},
+  pcorr: {l:"Passività correnti", side:"P", c:"--f3", tc:"--tf3", info:"Debiti da pagare entro 12 mesi."},
+};
+
+const SP_ATT = [
+  {k:"credSoci", l:"A) Crediti verso soci per versamenti ancora dovuti", to:"pnRett", note:"Si porta in diminuzione del patrimonio netto"},
+  {k:"immImm", l:"B.I Immobilizzazioni immateriali (al netto dei fondi)", to:"imm"},
+  {k:"immMat", l:"B.II Immobilizzazioni materiali (al netto dei fondi)", to:"imm"},
+  {k:"immFin", l:"B.III Immobilizzazioni finanziarie", to:"imm"},
+  {k:"riman", l:"C.I Rimanenze", to:"disp"},
+  {k:"credClienti", l:"C.II Crediti verso clienti (entro 12 mesi)", to:"ldiff"},
+  {k:"altriCred", l:"C.II Altri crediti (entro 12 mesi)", to:"ldiff"},
+  {k:"credOltre", l:"C.II Crediti esigibili oltre 12 mesi", to:"imm", note:"Anche se nell'attivo circolante, scadono oltre l'anno"},
+  {k:"attFinBreve", l:"C.III Attività finanziarie non immobilizzate", to:"ldiff"},
+  {k:"liquidita", l:"C.IV Disponibilità liquide (cassa e banche)", to:"limm"},
+  {k:"rateiAtt", l:"D) Ratei e risconti attivi", to:"ldiff", note:"Semplificazione: i risconti pluriennali andrebbero tra le immobilizzazioni"},
+];
+const SP_PASS = [
+  {k:"capitale", l:"A.I Capitale sociale", to:"pn"},
+  {k:"riserve", l:"A.II–A.VIII Riserve e utili portati a nuovo", to:"pn"},
+  {k:"utile", l:"A.IX Utile (perdita) dell'esercizio", to:"pn", ro:true, note:"Calcolato in automatico dal conto economico"},
+  {k:"dividendi", l:"di cui: utile destinato a dividendi", to:"pcorr", note:"Esce dal patrimonio netto: è un debito verso i soci da pagare a breve"},
+  {k:"fondiRischi", l:"B) Fondi per rischi e oneri", to:"pcons", note:"Semplificazione: considerati a lungo termine"},
+  {k:"tfr", l:"C) Trattamento di fine rapporto (TFR)", to:"pcons"},
+  {k:"mutui", l:"D) Debiti verso banche oltre 12 mesi (mutui)", to:"pcons"},
+  {k:"debBancheBreve", l:"D) Debiti verso banche entro 12 mesi", to:"pcorr"},
+  {k:"debFornitori", l:"D) Debiti verso fornitori", to:"pcorr"},
+  {k:"debTrib", l:"D) Debiti tributari e previdenziali", to:"pcorr"},
+  {k:"altriDeb", l:"D) Altri debiti entro 12 mesi", to:"pcorr"},
+  {k:"rateiPass", l:"E) Ratei e risconti passivi", to:"pcorr"},
+];
+const CE = [
+  {h:"A) Valore della produzione"},
+  {k:"ricavi", l:"A.1 Ricavi delle vendite e delle prestazioni", to:"Valore della produzione"},
+  {k:"varRimProd", l:"A.2 Variazione rimanenze prodotti (+ aumento / − diminuzione)", to:"Valore della produzione"},
+  {k:"incrImm", l:"A.4 Incrementi di immobilizzazioni per lavori interni", to:"Valore della produzione"},
+  {k:"altriRicavi", l:"A.5 Altri ricavi e proventi", to:"Valore della produzione"},
+  {h:"B) Costi della produzione"},
+  {k:"costiMP", l:"B.6 Materie prime, sussidiarie e merci", to:"Consumi"},
+  {k:"servizi", l:"B.7 Servizi", to:"Costi esterni"},
+  {k:"godimento", l:"B.8 Godimento beni di terzi (affitti, leasing)", to:"Costi esterni"},
+  {k:"personale", l:"B.9 Costi per il personale", to:"Personale → MOL"},
+  {k:"ammortamenti", l:"B.10 Ammortamenti e svalutazioni", to:"Ammortamenti → Reddito operativo"},
+  {k:"varRimMP", l:"B.11 Variazione rimanenze materie (+ diminuzione / − aumento)", to:"Consumi"},
+  {k:"accantonamenti", l:"B.12–B.13 Accantonamenti", to:"Accantonamenti → Reddito operativo"},
+  {k:"oneriDiversi", l:"B.14 Oneri diversi di gestione", to:"Costi esterni"},
+  {h:"C–D) Gestione finanziaria"},
+  {k:"provFin", l:"C.15–C.16 Proventi finanziari", to:"Gestione finanziaria"},
+  {k:"oneriFin", l:"C.17 Interessi e altri oneri finanziari", to:"Gestione finanziaria"},
+  {k:"rettifiche", l:"D) Rettifiche di valore di attività finanziarie (±)", to:"Gestione finanziaria"},
+  {h:"Imposte"},
+  {k:"imposte", l:"20) Imposte sul reddito (IRES e IRAP)", to:"Imposte"},
+];
+
+const ESEMPIO = {
+  credSoci:0, immImm:80000, immMat:1100000, immFin:60000, riman:380000, credClienti:520000, altriCred:70000,
+  credOltre:40000, attFinBreve:30000, liquidita:150000, rateiAtt:15000,
+  capitale:400000, riserve:380000, dividendi:50000, fondiRischi:45000, tfr:190000, mutui:520000,
+  debBancheBreve:230000, debFornitori:410000, debTrib:85000, altriDeb:40000, rateiPass:10000,
+  ricavi:2400000, varRimProd:20000, incrImm:0, altriRicavi:30000, costiMP:1050000, servizi:380000,
+  godimento:60000, personale:560000, ammortamenti:140000, varRimMP:-10000, accantonamenti:15000,
+  oneriDiversi:25000, provFin:5000, oneriFin:48000, rettifiche:0, imposte:52000
+};
+
+/* ============ STATO ============ */
+const LS = "lab-bilancio-v1";
+let state = {data:{...ESEMPIO}, azienda:"Alfa S.r.l.", esempio:true, tab:"panoramica", iva:true, filtro:"Tutti",
+  scen:{ric:0, pers:0, cons:0, cap:0, inc:0}};
+try{ const s = JSON.parse(localStorage.getItem(LS)||"null"); if(s && s.data) state = {...state, ...s, scen:{...state.scen, ...(s.scen||{})}}; }catch(e){}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
+
+/* ============ FORMATI ============ */
+const nf0 = new Intl.NumberFormat("it-IT",{maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat("it-IT",{minimumFractionDigits:1,maximumFractionDigits:1});
+const nf2 = new Intl.NumberFormat("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2});
+const eur = v => (isFinite(v)? nf0.format(Math.round(v)) : "—") + " €";
+const eurK = v => isFinite(v) ? (Math.abs(v)>=1e6 ? nf2.format(v/1e6)+" mln €" : nf0.format(Math.round(v/1000))+" k€") : "—";
+const pct = v => isFinite(v) ? nf1.format(v*100)+"%" : "n.d.";
+const x2 = v => isFinite(v) ? nf2.format(v) : "n.d.";
+const gg = v => isFinite(v) ? nf0.format(Math.round(v))+" gg" : "n.d.";
+function parseIT(s){ s = String(s).replace(/[€\s]/g,"").replace(/\./g,"").replace(",","."); const n = Number(s); return isFinite(n)? n : 0; }
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const div = (a,b) => b ? a/b : NaN;
+
+/* ============ CALCOLO ============ */
+function compute(d){
+  const g = k => Number(d[k])||0;
+  const ce = {};
+  ce.vp = g("ricavi")+g("varRimProd")+g("incrImm")+g("altriRicavi");
+  ce.consumi = g("costiMP")+g("varRimMP");
+  ce.esterni = g("servizi")+g("godimento")+g("oneriDiversi");
+  ce.va = ce.vp - ce.consumi - ce.esterni;
+  ce.personale = g("personale");
+  ce.mol = ce.va - ce.personale;
+  ce.ammAcc = g("ammortamenti")+g("accantonamenti");
+  ce.ro = ce.mol - ce.ammAcc;
+  ce.fin = g("provFin") - g("oneriFin") + g("rettifiche");
+  ce.ante = ce.ro + ce.fin;
+  ce.imposte = g("imposte");
+  ce.utile = ce.ante - ce.imposte;
+  ce.ricavi = g("ricavi");
+
+  const v = {...d, utile: ce.utile};
+  const totAtt = SP_ATT.reduce((s,x)=>s+(Number(v[x.k])||0),0);
+  const totPass = SP_PASS.filter(x=>x.k!=="dividendi").reduce((s,x)=>s+(Number(v[x.k])||0),0);
+
+  const comp = {imm:[],disp:[],ldiff:[],limm:[],pn:[],pcons:[],pcorr:[]};
+  SP_ATT.forEach(x=>{ if(x.to!=="pnRett") comp[x.to].push([x.l, Number(v[x.k])||0]); });
+  SP_PASS.forEach(x=>{ if(x.k!=="dividendi") comp[x.to].push([x.l, Number(v[x.k])||0]); });
+  comp.pn.push(["meno: utile destinato a dividendi", -g("dividendi")]);
+  comp.pcorr.push(["Dividendi da pagare ai soci", g("dividendi")]);
+  if(g("credSoci")) comp.pn.push(["meno: crediti verso soci per versamenti dovuti", -g("credSoci")]);
+  const sp = {};
+  for(const k in comp) sp[k] = comp[k].reduce((s,c)=>s+c[1],0);
+  sp.ac = sp.disp+sp.ldiff+sp.limm;
+  sp.ci = sp.imm+sp.ac;
+  sp.cterzi = sp.pcons+sp.pcorr;
+  sp.fonti = sp.pn+sp.cterzi;
+  sp.debFin = g("mutui")+g("debBancheBreve");
+
+  const m = {
+    strutt1: sp.pn - sp.imm,
+    strutt2: sp.pn + sp.pcons - sp.imm,
+    ccn: sp.ac - sp.pcorr,
+    tesoreria: sp.ldiff + sp.limm - sp.pcorr,
+  };
+  return {ce, sp, comp, m, totAtt, totPass, d:v};
+}
+
+/* ============ INDICI ============ */
+const GROUPS = ["Redditività","Solidità patrimoniale","Liquidità","Rotazione"];
+const IND = [
+  {id:"roe", g:"Redditività", n:"ROE", full:"Return on Equity — redditività del capitale proprio", t:"pct",
+   f:r=>({v:div(r.ce.utile,r.sp.pn), nl:"Utile netto", nv:r.ce.utile, dl:"Patrimonio netto", dv:r.sp.pn}),
+   ev:v=> v>=0.08?"good": v>=0.03?"warn":"bad", soglia:"≥ 8% buono · 3–8% da migliorare · < 3% insufficiente",
+   sig:"Quanto rende ogni euro investito dai soci. Va confrontato con il rendimento di un investimento senza rischio (es. titoli di Stato) più un premio per il rischio d'impresa."},
+  {id:"roi", g:"Redditività", n:"ROI", full:"Return on Investment — redditività del capitale investito", t:"pct",
+   f:r=>({v:div(r.ce.ro,r.sp.ci), nl:"Reddito operativo", nv:r.ce.ro, dl:"Capitale investito", dv:r.sp.ci}),
+   ev:(v,r)=>{const rod=div(r.d.oneriFin,r.sp.debFin); if(!isFinite(rod)) return v>0?"good":"bad"; return v>rod+0.01?"good": v>=rod?"warn":"bad";},
+   soglia:"Deve superare il ROD (costo del debito): solo così indebitarsi conviene",
+   sig:"Misura l'efficienza della gestione caratteristica, indipendentemente da come è finanziata l'azienda."},
+  {id:"ros", g:"Redditività", n:"ROS", full:"Return on Sales — redditività delle vendite", t:"pct",
+   f:r=>({v:div(r.ce.ro,r.ce.ricavi), nl:"Reddito operativo", nv:r.ce.ro, dl:"Ricavi delle vendite", dv:r.ce.ricavi}),
+   ev:v=> v>=0.05?"good": v>=0?"warn":"bad", soglia:"≥ 5% buono · 0–5% margini sottili · < 0 perdita operativa",
+   sig:"Quanti centesimi di reddito operativo restano per ogni euro venduto, dopo aver pagato i costi della gestione caratteristica."},
+  {id:"rot", g:"Redditività", n:"Rotazione del capitale investito", full:"Quante volte il capitale investito «gira» in ricavi", t:"x",
+   f:r=>({v:div(r.ce.ricavi,r.sp.ci), nl:"Ricavi delle vendite", nv:r.ce.ricavi, dl:"Capitale investito", dv:r.sp.ci}),
+   ev:v=> v>=1?"good": v>=0.6?"warn":"bad", soglia:"Dipende molto dal settore: commercio alto, industria pesante basso",
+   sig:"Con ROS forma il ROI: ROI = ROS × Rotazione. Un'azienda può essere redditizia vendendo molto con margini bassi, o poco con margini alti."},
+  {id:"rod", g:"Redditività", n:"ROD", full:"Return on Debt — costo medio dei debiti finanziari", t:"pct",
+   f:r=>({v:div(r.d.oneriFin,r.sp.debFin), nl:"Oneri finanziari", nv:r.d.oneriFin, dl:"Debiti finanziari (banche)", dv:r.sp.debFin}),
+   ev:(v,r)=>{const roi=div(r.ce.ro,r.sp.ci); return v<roi-0.01?"good": v<=roi?"warn":"bad";},
+   soglia:"Più è basso rispetto al ROI, più la leva finanziaria lavora a favore",
+   sig:"Quanto costa in media all'azienda un euro preso in prestito dalle banche. Calcolato sui soli debiti onerosi."},
+  {id:"lev", g:"Solidità patrimoniale", n:"Leverage", full:"Indice di indebitamento", t:"x",
+   f:r=>({v:div(r.sp.ci,r.sp.pn), nl:"Capitale investito", nv:r.sp.ci, dl:"Patrimonio netto", dv:r.sp.pn}),
+   ev:v=> v<0?"bad": v<=3?"good": v<=5?"warn":"bad", soglia:"≤ 3 equilibrato · 3–5 indebitata · > 5 molto indebitata",
+   sig:"Quanti euro di investimenti ci sono per ogni euro dei soci. Leverage 1 = nessun debito."},
+  {id:"aut", g:"Solidità patrimoniale", n:"Autonomia finanziaria", full:"Quota degli impieghi coperta da mezzi propri", t:"pct",
+   f:r=>({v:div(r.sp.pn,r.sp.fonti), nl:"Patrimonio netto", nv:r.sp.pn, dl:"Totale fonti", dv:r.sp.fonti}),
+   ev:v=> v>=0.33?"good": v>=0.2?"warn":"bad", soglia:"≥ 33% buona · 20–33% accettabile · < 20% dipendente da terzi",
+   sig:"È l'inverso del leverage. Più è alta, meno l'azienda dipende da banche e fornitori."},
+  {id:"cop1", g:"Solidità patrimoniale", n:"Copertura immobilizzazioni (primaria)", full:"Patrimonio netto rispetto all'attivo fisso", t:"x",
+   f:r=>({v:div(r.sp.pn,r.sp.imm), nl:"Patrimonio netto", nv:r.sp.pn, dl:"Immobilizzazioni", dv:r.sp.imm}),
+   ev:v=> v>=1?"good": v>=0.6?"warn":"bad", soglia:"≥ 1 ideale · 0,6–1 normale nelle PMI · < 0,6 debole",
+   sig:"Indica se i soli soci finanziano tutti gli investimenti durevoli."},
+  {id:"cop2", g:"Solidità patrimoniale", n:"Copertura immobilizzazioni (secondaria)", full:"Fonti durevoli rispetto all'attivo fisso", t:"x",
+   f:r=>({v:div(r.sp.pn+r.sp.pcons,r.sp.imm), nl:"Patrimonio netto + Passività consolidate", nv:r.sp.pn+r.sp.pcons, dl:"Immobilizzazioni", dv:r.sp.imm}),
+   ev:v=> v>=1.1?"good": v>=1?"warn":"bad", soglia:"> 1 equilibrio · < 1 squilibrio strutturale",
+   sig:"Regola d'oro: gli investimenti a lungo termine vanno pagati con fonti a lungo termine. Se < 1, parte dei macchinari è finanziata con debiti a breve."},
+  {id:"cr", g:"Liquidità", n:"Current ratio", full:"Indice di disponibilità", t:"x",
+   f:r=>({v:div(r.sp.ac,r.sp.pcorr), nl:"Attivo circolante", nv:r.sp.ac, dl:"Passività correnti", dv:r.sp.pcorr}),
+   ev:v=> v>=1.5?"good": v>=1?"warn":"bad", soglia:"≥ 1,5 buono · 1–1,5 attenzione · < 1 tensione finanziaria",
+   sig:"Le risorse che diventeranno liquide entro l'anno bastano a pagare i debiti in scadenza entro l'anno?"},
+  {id:"qr", g:"Liquidità", n:"Quick ratio (acid test)", full:"Indice di liquidità", t:"x",
+   f:r=>({v:div(r.sp.ldiff+r.sp.limm,r.sp.pcorr), nl:"Liquidità differite + immediate", nv:r.sp.ldiff+r.sp.limm, dl:"Passività correnti", dv:r.sp.pcorr}),
+   ev:v=> v>=1?"good": v>=0.7?"warn":"bad", soglia:"≥ 1 buono · 0,7–1 attenzione · < 0,7 critico",
+   sig:"Come il current ratio ma senza il magazzino, che è la parte meno sicura da trasformare in denaro."},
+  {id:"ggc", g:"Rotazione", n:"Durata media crediti clienti", full:"Giorni medi di incasso", t:"gg",
+   f:r=>{const den=r.ce.ricavi*(state.iva?1.22:1); return {v:div(r.d.credClienti,den)*365, nl:"Crediti verso clienti", nv:r.d.credClienti, dl:"Ricavi"+(state.iva?" × 1,22 (IVA)":""), dv:den, k:"× 365"};},
+   ev:v=> v<=60?"good": v<=90?"warn":"bad", soglia:"≤ 60 gg buono · 60–90 attenzione · > 90 incassi lenti",
+   sig:"Dopo quanti giorni, in media, i clienti pagano. I crediti includono l'IVA, i ricavi no: per questo si moltiplicano i ricavi per 1,22."},
+  {id:"ggf", g:"Rotazione", n:"Durata media debiti fornitori", full:"Giorni medi di pagamento", t:"gg",
+   f:r=>{const acq=(Number(r.d.costiMP)||0)+(Number(r.d.servizi)||0)+(Number(r.d.godimento)||0); const den=acq*(state.iva?1.22:1);
+     return {v:div(r.d.debFornitori,den)*365, nl:"Debiti verso fornitori", nv:r.d.debFornitori, dl:"Acquisti (B6+B7+B8)"+(state.iva?" × 1,22":""), dv:den, k:"× 365"};},
+   ev:(v,r)=>{const c=IND.find(i=>i.id==="ggc").f(r).v; return v>=c?"good": v>=c-20?"warn":"bad";},
+   soglia:"Conviene che sia maggiore della durata crediti: prima incasso, poi pago",
+   sig:"Dopo quanti giorni l'azienda paga i fornitori. Attenzione: un valore molto alto può anche indicare difficoltà a pagare."},
+  {id:"ggm", g:"Rotazione", n:"Giacenza media magazzino", full:"Giorni di permanenza delle scorte", t:"gg",
+   f:r=>({v:div(r.d.riman,r.ce.ricavi)*365, nl:"Rimanenze", nv:r.d.riman, dl:"Ricavi delle vendite", dv:r.ce.ricavi, k:"× 365"}),
+   ev:v=> v<=60?"good": v<=120?"warn":"bad", soglia:"Dipende dal settore: meno giorni = meno capitale immobilizzato in scorte",
+   sig:"Versione semplificata sui ricavi; la versione più precisa usa il costo del venduto al denominatore."},
+];
+function fmtT(v,t){ return t==="pct"?pct(v): t==="gg"?gg(v): x2(v); }
+
+/* ============ TABS ============ */
+const TABS = [
+  ["panoramica","Panoramica"],["bilancio","Bilancio civilistico"],["sp","Riclassifica SP"],["ce","Riclassifica CE"],
+  ["margini","Margini"],["indici","Indici"],["simula","Simulatore"],["quiz","Mettiti alla prova"]
+];
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = TABS.map(([id,l],i)=>
+    `<button role="tab" aria-selected="${state.tab===id}" data-tab="${id}"><span class="n">${i}</span>${l}</button>`).join("");
+}
+document.getElementById("tabs").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-tab]"); if(!b) return; go(b.dataset.tab);
+});
+function go(id){ state.tab=id; save(); renderTabs(); render(); window.scrollTo({top:0}); }
+
+/* ============ RENDER ============ */
+const main = document.getElementById("main");
+function render(){
+  const r = compute(state.data);
+  document.getElementById("tagEsempio").hidden = !state.esempio;
+  const fn = {panoramica, bilancio, sp:spTab, ce:ceTab, margini, indici, simula, quiz}[state.tab] || panoramica;
+  main.innerHTML = `<section class="tab">${fn(r)}</section>`;
+  if(state.tab==="bilancio") bindBilancio();
+  if(state.tab==="simula") bindSimula();
+  if(state.tab==="quiz") bindQuiz();
+}
+const intro = (t,p) => `<div class="intro"><h2>${t}</h2><p>${p}</p></div>`;
+const statusLbl = {good:"Buono", warn:"Attenzione", bad:"Critico"};
+const pill = s => `<span class="pill ${s}">${statusLbl[s]||"—"}</span>`;
+
+/* ---- 0 Panoramica ---- */
+function panoramica(r){
+  const get = id => { const i=IND.find(x=>x.id===id); const o=i.f(r); return {i, v:o.v, s:i.ev(o.v,r)}; };
+  const tiles = [
+    ["Ricavi delle vendite", eurK(r.ce.ricavi), null, "ce"],
+    ["MOL (EBITDA)", eurK(r.ce.mol), r.ce.mol>0?"good":"bad", "ce"],
+    ["Utile netto", eurK(r.ce.utile), r.ce.utile>0?"good":"bad", "ce"],
+    ...["roe","roi","cr","lev"].map(id=>{const g=get(id); return [g.i.n, fmtT(g.v,g.i.t), g.s, "indici"];})
+  ];
+  const q = r.totAtt - r.totPass;
+  const roi=get("roi").v, rod=get("rod").v, cop2=get("cop2"), lev=get("lev"), qr=get("qr");
+  const diag = [];
+  diag.push({s: r.ce.utile>0 ? (get("roe").s) : "bad", t:"Redditività",
+    p: r.ce.utile>0 ? `L'azienda produce utile: il ROE è ${pct(get("roe").v)}. ${roi>rod ? `Il ROI (${pct(roi)}) supera il costo del debito (${pct(rod)}): la leva finanziaria è positiva, l'indebitamento fa crescere il ROE.` : `Il ROI (${pct(roi)}) non supera il costo del debito (${pct(rod)}): ogni euro di debito in più riduce il ROE.`}`
+      : `L'esercizio chiude in perdita (${eur(r.ce.utile)}). Controlla prima il MOL: se è positivo, il problema sta in ammortamenti, oneri finanziari o imposte.`});
+  diag.push({s:cop2.s, t:"Equilibrio patrimoniale",
+    p: r.m.strutt2>=0 ? `Le fonti durevoli coprono tutte le immobilizzazioni (margine di struttura secondario ${eur(r.m.strutt2)}). L'attivo fisso non è finanziato con debiti a breve.`
+      : `Le fonti durevoli non bastano a coprire le immobilizzazioni (margine di struttura secondario ${eur(r.m.strutt2)}). Parte degli investimenti a lungo è pagata con debiti a breve: rischio di squilibrio.`});
+  diag.push({s:qr.s, t:"Liquidità",
+    p: r.m.tesoreria>=0 ? `Crediti e cassa bastano a pagare i debiti a breve senza vendere il magazzino (margine di tesoreria ${eur(r.m.tesoreria)}).`
+      : `Senza vendere il magazzino, crediti e cassa non bastano a pagare i debiti a breve: mancano ${eur(-r.m.tesoreria)} (margine di tesoreria negativo).`});
+  diag.push({s:lev.s, t:"Indebitamento",
+    p:`Per ogni euro dei soci ci sono ${x2(lev.v)} euro di investimenti (leverage). L'autonomia finanziaria è ${pct(get("aut").v)}.`});
+  return `
+  ${intro("Panoramica", "Lo stato di salute dell'azienda in un colpo d'occhio. Ogni riquadro porta alla pagina dove il numero viene calcolato passo per passo. Cambia i dati nella sezione 1 e tutto si aggiorna.")}
+  ${Math.abs(q)>0.5 ? `<div class="quadra">${pill("bad")}<span>Il bilancio inserito non quadra: Attivo − Passivo = <b class="num">${eur(q)}</b>. Gli indici sono calcolati lo stesso ma vanno presi con cautela.</span><button class="btn ghost" onclick="go('bilancio')">Correggi i dati</button></div>`:""}
+  <div class="kpis">${tiles.map(t=>`<button class="kpi" onclick="go('${t[3]}')"><span class="l">${t[0]}</span><span class="v">${t[1]}</span>${t[2]?pill(t[2]):`<span class="pill neutral">Dato di partenza</span>`}</button>`).join("")}</div>
+  <div class="grid2">
+    <div class="panel diagnosi"><h3>Diagnosi del commercialista</h3>${diag.map(x=>`<div class="diag">${pill(x.s)}<div><div class="ttl">${x.t}</div><p>${x.p}</p></div></div>`).join("")}</div>
+    <div class="panel chart"><h3>Impieghi e fonti</h3><p class="note" style="margin:8px 0 12px">A sinistra <b>dove</b> sono investiti i soldi, a destra <b>da dove</b> arrivano. Le due colonne sono sempre alte uguali.</p>${spChart(r)}</div>
+  </div>
+  <div class="panel"><h3>Il percorso consigliato</h3>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><td class="mono">1</td><td><b>Bilancio civilistico</b></td><td>Inserisci o modifica le voci dello schema di legge (artt. 2424 e 2425 c.c.).</td></tr>
+      <tr><td class="mono">2</td><td><b>Riclassifica SP</b></td><td>Riordina attivo e passivo per scadenza (criterio finanziario).</td></tr>
+      <tr><td class="mono">3</td><td><b>Riclassifica CE</b></td><td>Costruisci il conto economico a valore aggiunto: VA → MOL → Reddito operativo → Utile.</td></tr>
+      <tr><td class="mono">4</td><td><b>Margini</b></td><td>Confronta impieghi e fonti con le stesse scadenze.</td></tr>
+      <tr><td class="mono">5</td><td><b>Indici</b></td><td>Formula, numeri, risultato e significato di ogni indice.</td></tr>
+      <tr><td class="mono">6</td><td><b>Simulatore</b></td><td>Prova a cambiare una decisione aziendale e osserva l'effetto sugli indici.</td></tr>
+      <tr><td class="mono">7</td><td><b>Mettiti alla prova</b></td><td>Esercizi di calcolo e domande di teoria con correzione.</td></tr>
+    </tbody></table></div>
+  </div>`;
+}
+
+function spChart(r){
+  const W=560,H=340,top=24,bh=H-top-10, colW=170, xA=70, xP=W-70-colW;
+  const tot = Math.max(r.sp.ci, r.sp.fonti, 1);
+  const seg = (keys, x) => { let y=top; return keys.map(k=>{ const v=Math.max(r.sp[k],0); const h=v/tot*bh; const out =
+    `<rect x="${x}" y="${y}" width="${colW}" height="${Math.max(h,0)}" fill="var(${AGG[k].c})" stroke="var(--surface)" stroke-width="2"><title>${AGG[k].l}: ${eur(r.sp[k])}</title></rect>`+
+    (h>30?`<text x="${x+colW/2}" y="${y+h/2-3}" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(${AGG[k].tc})">${AGG[k].l.split(" (")[0]}</text><text x="${x+colW/2}" y="${y+h/2+13}" text-anchor="middle" font-size="12" fill="var(${AGG[k].tc})">${eurK(r.sp[k])} · ${pct(r.sp[k]/tot)}</text>`:
+     h>14?`<text x="${x+colW/2}" y="${y+h/2+4}" text-anchor="middle" font-size="11" fill="var(${AGG[k].tc})">${AGG[k].l.split(" (")[0]} ${pct(r.sp[k]/tot)}</text>`:"");
+    y+=h; return out; }).join(""); };
+  const neg = r.sp.pn<0 ? `<text x="${xP+colW/2}" y="${H-2}" text-anchor="middle" font-size="11" fill="var(--bad)">Patrimonio netto negativo: ${eur(r.sp.pn)}</text>`:"";
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Confronto impieghi e fonti">
+    <text x="${xA+colW/2}" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent)">IMPIEGHI ${eurK(r.sp.ci)}</text>
+    <text x="${xP+colW/2}" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fonti)">FONTI ${eurK(r.sp.fonti)}</text>
+    ${seg(["imm","disp","ldiff","limm"], xA)}${seg(["pn","pcons","pcorr"], xP)}
+    <line x1="${xA+colW+8}" x2="${xP-8}" y1="${top + r.sp.imm/tot*bh}" y2="${top + Math.max(r.sp.pn+r.sp.pcons,0)/tot*bh}" stroke="var(--muted)" stroke-dasharray="4 4"/>
+    <text x="${W/2}" y="${top + (r.sp.imm/tot*bh + Math.max(r.sp.pn+r.sp.pcons,0)/tot*bh)/2 - 6}" text-anchor="middle" font-size="10.5" fill="var(--muted)">margine di</text>
+    <text x="${W/2}" y="${top + (r.sp.imm/tot*bh + Math.max(r.sp.pn+r.sp.pcons,0)/tot*bh)/2 + 7}" text-anchor="middle" font-size="10.5" fill="var(--muted)">struttura 2°</text>
+    ${neg}</svg>`;
+}
+
+/* ---- 1 Bilancio ---- */
+const DEST = {imm:"Immobilizzazioni", disp:"Disponibilità", ldiff:"Liquidità differite", limm:"Liquidità immediate", pn:"Patrimonio netto", pcons:"Passività consolidate", pcorr:"Passività correnti", pnRett:"rettifica del Patrimonio netto"};
+function voce(x, val, fonti){
+  const destTxt = x.to in DEST ? DEST[x.to] : x.to;
+  return `<div class="voce"><label for="in-${x.k}">${x.l}</label>
+    <input id="in-${x.k}" data-k="${x.k}" inputmode="decimal" value="${nf0.format(val||0)}" ${x.ro?"readonly":""}>
+    <div class="dest">va in → <b class="${fonti?"f":""}">${destTxt}</b>${x.note?` · ${x.note}`:""}</div></div>`;
+}
+function bilancio(r){
+  const q = r.totAtt - r.totPass;
+  return `
+  ${intro("1 · Bilancio civilistico", "Questo è lo schema imposto dal Codice civile. Sotto ogni voce trovi dove andrà a finire nella riclassificazione: è il passaggio che di solito crea più confusione. Gli importi sono in euro; puoi scrivere 1.250.000 oppure 1250000.")}
+  <div class="quadra">${Math.abs(q)<0.5?pill("good"):pill("bad")}
+    <span>Totale attivo <b class="num">${eur(r.totAtt)}</b> · Totale passivo <b class="num">${eur(r.totPass)}</b> ${Math.abs(q)<0.5?"· Il bilancio quadra.":`· Differenza <b class="num">${eur(q)}</b>: controlla le voci.`}</span>
+    <span class="btns" style="margin-left:auto"><button class="btn ghost" id="bEsempio">Ricarica esempio</button><button class="btn ghost" id="bAzzera">Azzera tutto</button></span>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="blockh"><h3>Stato patrimoniale · Attivo</h3><span class="num">${eur(r.totAtt)}</span></div>
+      ${SP_ATT.map(x=>voce(x, state.data[x.k])).join("")}
+      <div class="blockh f"><h3>Stato patrimoniale · Passivo</h3><span class="num">${eur(r.totPass)}</span></div>
+      ${SP_PASS.map(x=>voce(x, x.k==="utile"? r.ce.utile : state.data[x.k], true)).join("")}
+    </div>
+    <div class="panel">
+      ${CE.map(x=> x.h ? `<div class="blockh"><h3>${x.h}</h3></div>` : voce(x, state.data[x.k])).join("")}
+      <div class="aggtot"><span>21) Utile (perdita) dell'esercizio</span><span class="num">${eur(r.ce.utile)}</span></div>
+      <p class="note">Differenza A − B (risultato della gestione operativa): <b class="num">${eur(r.ce.ro)}</b>. Coincide con il Reddito operativo della riclassificazione.</p>
+    </div>
+  </div>`;
+}
+function bindBilancio(){
+  main.querySelectorAll("input[data-k]:not([readonly])").forEach(inp=>{
+    inp.addEventListener("change", ()=>{ state.data[inp.dataset.k]=parseIT(inp.value); state.esempio=false; save(); const y=window.scrollY; render(); window.scrollTo({top:y}); const n=document.getElementById(inp.id); if(n) n.focus(); });
+    inp.addEventListener("focus", ()=>inp.select());
+  });
+  document.getElementById("bEsempio").onclick = ()=>{ state.data={...ESEMPIO}; state.esempio=true; save(); render(); };
+  const bz = document.getElementById("bAzzera");
+  bz.onclick = ()=>{ if(bz.dataset.c){ for(const k in state.data) state.data[k]=0; state.esempio=false; save(); render(); } else { bz.dataset.c="1"; bz.textContent="Conferma: azzera"; setTimeout(()=>{ if(bz.isConnected){ bz.textContent="Azzera tutto"; delete bz.dataset.c; } },3000); } };
+}
+
+/* ---- 2 Riclassifica SP ---- */
+function aggList(r, keys, totLabel, tot){
+  return keys.map(k=>`<details class="agg"><summary><span class="sw" style="background:var(${AGG[k].c})"></span><span><b>${AGG[k].l}</b><br><span style="font-size:.82rem;color:var(--muted)">${AGG[k].info}</span></span><span class="num">${eur(r.sp[k])}</span><span class="pct num">${pct(r.sp[k]/tot)}</span></summary>
+    <div class="comp">${r.comp[k].filter(c=>c[1]!==0).map(c=>`<div><span>${c[0]}</span><span class="num">${eur(c[1])}</span></div>`).join("")||"<div>Nessuna voce valorizzata</div>"}</div></details>`).join("")
+    + `<div class="aggtot"><span>${totLabel}</span><span class="num">${eur(tot)}</span></div>`;
+}
+function spTab(r){
+  return `
+  ${intro("2 · Stato patrimoniale riclassificato", "Criterio finanziario: le voci si riordinano in base al tempo in cui torneranno denaro (impieghi) o andranno rimborsate (fonti). Lo spartiacque è sempre 12 mesi. Tocca un aggregato per vedere da quali voci del bilancio è composto.")}
+  <div class="grid2">
+    <div class="panel"><div class="blockh"><h3>Impieghi · Capitale investito</h3></div>
+      ${aggList(r, ["imm","disp","ldiff","limm"], "Totale impieghi (Capitale investito)", r.sp.ci)}
+      <p class="note" style="margin-top:12px">Attivo circolante = Disponibilità + Liquidità differite + Liquidità immediate = <b class="num">${eur(r.sp.ac)}</b></p></div>
+    <div class="panel"><div class="blockh f"><h3>Fonti · Capitale acquisito</h3></div>
+      ${aggList(r, ["pn","pcons","pcorr"], "Totale fonti", r.sp.fonti)}
+      <p class="note" style="margin-top:12px">Capitale di terzi = Passività consolidate + correnti = <b class="num">${eur(r.sp.cterzi)}</b></p></div>
+  </div>
+  <div class="grid2">
+    <div class="panel chart"><h3>Composizione</h3>${spChart(r)}</div>
+    <div class="panel" style="display:grid;gap:10px;align-content:start"><h3>Le tre regole da ricordare</h3>
+      <p class="note"><b>Scadenza, non natura.</b> Un credito verso clienti esigibile oltre 12 mesi va tra le immobilizzazioni, anche se nello schema civilistico sta nell'attivo circolante.</p>
+      <p class="note"><b>L'utile si divide.</b> La parte destinata a dividendi lascia il patrimonio netto e diventa un debito a breve verso i soci. La parte accantonata a riserva resta nel patrimonio netto.</p>
+      <p class="note"><b>Le immobilizzazioni sono al netto.</b> Nello schema civilistico i fondi ammortamento sono già sottratti dal valore dei beni.</p>
+      <p class="note">Esiste anche il <b>criterio funzionale</b> (o di pertinenza gestionale), che divide le voci tra gestione operativa e finanziaria: è usato nell'analisi per flussi e nel rendiconto finanziario. Qui si usa il criterio finanziario, quello richiesto nella maggior parte dei programmi scolastici.</p>
+    </div>
+  </div>`;
+}
+
+/* ---- 3 Riclassifica CE ---- */
+function ceTab(r){
+  const d = state.data, c=r.ce, vp=c.vp||1;
+  const rows = [
+    ["Ricavi delle vendite (A1)", d.ricavi],
+    ["± Variazione rimanenze prodotti (A2)", d.varRimProd],
+    ["+ Incrementi di immobilizzazioni (A4)", d.incrImm],
+    ["+ Altri ricavi e proventi (A5)", d.altriRicavi],
+    ["= VALORE DELLA PRODUZIONE", c.vp, "sub"],
+    ["− Acquisti di materie (B6)", -d.costiMP],
+    ["± Variazione rimanenze materie (B11)", -d.varRimMP],
+    ["− Servizi (B7)", -d.servizi],
+    ["− Godimento beni di terzi (B8)", -d.godimento],
+    ["− Oneri diversi di gestione (B14)", -d.oneriDiversi],
+    ["= VALORE AGGIUNTO", c.va, "sub"],
+    ["− Costo del personale (B9)", -d.personale],
+    ["= MARGINE OPERATIVO LORDO (MOL / EBITDA)", c.mol, "sub"],
+    ["− Ammortamenti e svalutazioni (B10)", -d.ammortamenti],
+    ["− Accantonamenti (B12–B13)", -d.accantonamenti],
+    ["= REDDITO OPERATIVO (EBIT)", c.ro, "sub"],
+    ["+ Proventi finanziari (C15–C16)", d.provFin],
+    ["− Oneri finanziari (C17)", -d.oneriFin],
+    ["± Rettifiche di valore (D)", d.rettifiche],
+    ["= RISULTATO ANTE IMPOSTE", c.ante, "sub"],
+    ["− Imposte (20)", -d.imposte],
+    ["= UTILE (PERDITA) NETTO", c.utile, "tot"],
+  ];
+  return `
+  ${intro("3 · Conto economico a valore aggiunto", "Lo schema civilistico mette tutti i costi in fila. La riclassificazione li raggruppa per far emergere i risultati intermedi: quanto valore crea l'azienda, quanto resta dopo aver pagato le persone, quanto dopo gli investimenti, quanto dopo le banche e il fisco.")}
+  <div class="grid2">
+    <div class="panel"><div class="tbl-wrap"><table>
+      <thead><tr><th>Voce</th><th class="r">Euro</th><th class="r">% su VP</th></tr></thead>
+      <tbody>${rows.filter(x=>x[2]||x[1]).map(x=>`<tr class="${x[2]||""}"><td>${x[0]}</td><td class="r num">${eur(x[1])}</td><td class="r num pct">${pct(x[1]/vp)}</td></tr>`).join("")}</tbody>
+    </table></div></div>
+    <div style="display:grid;gap:20px;align-content:start">
+      <div class="panel chart"><h3>Dalla produzione all'utile</h3>${waterfall(r)}</div>
+      <div class="panel" style="display:grid;gap:10px">
+        <p class="note"><b>Valore aggiunto:</b> la ricchezza creata dall'azienda, che servirà a remunerare lavoratori, investimenti, banche, Stato e soci.</p>
+        <p class="note"><b>MOL (EBITDA):</b> il risultato prima delle scelte contabili (ammortamenti) e finanziarie. È il dato più vicino alla cassa generata dalla gestione.</p>
+        <p class="note"><b>Reddito operativo (EBIT):</b> coincide con la differenza A − B del conto economico civilistico. È il numeratore di ROI e ROS.</p>
+        <p class="note">Dal 2016 (D.Lgs. 139/2015) lo schema civilistico non ha più l'area straordinaria: i componenti straordinari sono confluiti in A5 e B14.</p>
+      </div>
+    </div>
+  </div>`;
+}
+function waterfall(r){
+  const c=r.ce;
+  const steps=[["VP",c.vp,"t"],["Consumi",-c.consumi],["Costi est.",-c.esterni],["VA",c.va,"t"],["Personale",-c.personale],["MOL",c.mol,"t"],["Amm.+Acc.",-c.ammAcc],["RO",c.ro,"t"],["Finanz.",c.fin],["Imposte",-c.imposte],["Utile",c.utile,"t"]];
+  let run=0; const bars=steps.map(s=>{ if(s[2]){ const b={l:s[0],a:0,b:s[1],t:1}; run=s[1]; return b;} const b={l:s[0],a:run,b:run+s[1]}; run+=s[1]; return b; });
+  const vals=bars.flatMap(b=>[b.a,b.b]); const max=Math.max(...vals,1), min=Math.min(...vals,0);
+  const W=560,H=280,L=8,R=8,T=22,B=40, bw=(W-L-R)/bars.length;
+  const y=v=>T+(max-v)/(max-min)*(H-T-B);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafico a cascata del conto economico">
+    <line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>
+    ${bars.map((b,i)=>{ const x=L+i*bw+bw*0.15, w=bw*0.7, y1=y(Math.max(b.a,b.b)), h=Math.max(Math.abs(y(b.a)-y(b.b)),1);
+      const col = b.t ? (b.b>=0?"var(--accent)":"var(--bad)") : (b.b<b.a?"var(--warn)":"var(--good)");
+      const v=b.b-b.a;
+      return `<rect x="${x}" y="${y1}" width="${w}" height="${h}" fill="${col}" rx="2"><title>${b.l}: ${eur(b.t?b.b:v)}</title></rect>
+        <text x="${x+w/2}" y="${y1-5}" text-anchor="middle" font-size="10" fill="var(--ink)">${eurK(b.t?b.b:v).replace(" k€","k")}</text>
+        <text x="${x+w/2}" y="${H-B+16}" text-anchor="middle" font-size="10.5" font-weight="${b.t?700:400}" fill="${b.t?"var(--ink)":"var(--muted)"}">${b.l}</text>`; }).join("")}
+    <text x="${L}" y="${H-6}" font-size="10" fill="var(--muted)">Colonne verdi scure = risultati intermedi · arancio = costi · valori in migliaia di €</text>
+  </svg>`;
+}
+
+/* ---- 4 Margini ---- */
+function margini(r){
+  const sp=r.sp, m=r.m;
+  const card=(t,v,eq,expl,good)=>`<div class="panel marg"><div class="head" style="display:flex;justify-content:space-between;gap:10px;align-items:start"><h3>${t}</h3>${pill(good?"good":"bad")}</div>
+    <div class="big">${eur(v)}</div><div class="eq">${eq}</div><p class="f">${expl}</p></div>`;
+  return `
+  ${intro("4 · Margini", "I margini sono differenze in euro tra impieghi e fonti con scadenze simili. Rispondono a una domanda semplice: le fonti di una certa durata coprono gli impieghi della stessa durata?")}
+  <div class="grid2">
+    ${card("Margine di struttura primario", m.strutt1, `Patrimonio netto − Immobilizzazioni = ${eur(sp.pn)} − ${eur(sp.imm)}`, "I soci da soli finanziano tutto l'attivo fisso? Nelle PMI italiane è spesso negativo, anche in aziende sane: non è un allarme se il secondario è positivo.", m.strutt1>=0)}
+    ${card("Margine di struttura secondario", m.strutt2, `(PN + Passività consolidate) − Immobilizzazioni = ${eur(sp.pn+sp.pcons)} − ${eur(sp.imm)}`, "Le fonti a lungo termine (soci + debiti a lungo) coprono l'attivo fisso? Se è negativo, parte dei macchinari è pagata con debiti a breve: squilibrio strutturale.", m.strutt2>=0)}
+    ${card("Capitale circolante netto (CCN)", m.ccn, `Attivo circolante − Passività correnti = ${eur(sp.ac)} − ${eur(sp.pcorr)}`, "Le attività che diventano liquide entro l'anno superano i debiti che scadono entro l'anno? Nel criterio finanziario è sempre uguale al margine di struttura secondario.", m.ccn>=0)}
+    ${card("Margine di tesoreria", m.tesoreria, `(Liquidità differite + immediate) − Passività correnti = ${eur(sp.ldiff+sp.limm)} − ${eur(sp.pcorr)}`, "Come il CCN ma senza il magazzino. Se è negativo, per pagare i debiti a breve l'azienda deve prima vendere le scorte o chiedere nuovo credito.", m.tesoreria>=0)}
+  </div>
+  <div class="panel"><h3>Perché il CCN coincide con il margine di struttura secondario</h3>
+    <p class="note" style="margin-top:8px">Impieghi = Fonti, cioè Immobilizzazioni + Attivo circolante = PN + Passività consolidate + Passività correnti.
+    Spostando i termini: Attivo circolante − Passività correnti = PN + Passività consolidate − Immobilizzazioni.
+    Verifica con i tuoi numeri: <b class="num">${eur(m.ccn)}</b> = <b class="num">${eur(m.strutt2)}</b>.</p></div>`;
+}
+
+/* ---- 5 Indici ---- */
+function frac(o){ return `<span class="frac"><span>${esc(o.nl)}<br>${eur(o.nv)}</span><span>${esc(o.dl)}<br>${eur(o.dv)}</span></span>${o.k?` <span class="mono" style="font-size:.82rem">${o.k}</span>`:""}`; }
+function gaugeW(v,t){ if(!isFinite(v)) return 0; if(t==="pct") return Math.max(0,Math.min(1,(v+0.05)/0.3)); if(t==="gg") return Math.max(0,Math.min(1,v/150)); return Math.max(0,Math.min(1,v/3)); }
+function indici(r){
+  const list = IND.filter(i=> state.filtro==="Tutti" || i.g===state.filtro);
+  const g = id => IND.find(x=>x.id===id).f(r).v;
+  const roe=g("roe"), roi=g("roi"), ros=g("ros"), rot=g("rot"), lev=g("lev"), inc=div(r.ce.utile,r.ce.ro), rod=g("rod");
+  return `
+  ${intro("5 · Indici di bilancio", "Ogni scheda mostra la formula con i numeri della tua azienda già sostituiti. Il colore è un orientamento didattico: un indice va sempre letto insieme agli altri e confrontato con gli anni precedenti e con il settore.")}
+  <div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;align-items:center">
+    <div class="filters">${["Tutti",...GROUPS].map(f=>`<button class="chip" aria-pressed="${state.filtro===f}" onclick="state.filtro='${f}';save();render()">${f}</button>`).join("")}</div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:.9rem"><input type="checkbox" id="ivaChk" ${state.iva?"checked":""} onchange="state.iva=this.checked;save();render()"> Considera l'IVA al 22% nei giorni di incasso e pagamento</label>
+  </div>
+  <div class="grid3">${list.map(i=>{ const o=i.f(r); const s=i.ev(o.v,r);
+    return `<div class="panel idx"><div class="head"><div><div class="grp">${i.g}</div><h3>${i.n}</h3></div>${pill(s)}</div>
+      <div class="val">${fmtT(o.v,i.t)}</div>
+      <div class="gauge"><i style="width:${gaugeW(o.v,i.t)*100}%;background:var(--${s})"></i></div>
+      <div>${frac(o)}</div>
+      <div style="font-size:.82rem;color:var(--muted)">${i.soglia}</div>
+      <details><summary>Cosa significa</summary><p><b>${i.full}.</b> ${i.sig}</p></details></div>`;}).join("")}</div>
+  ${state.filtro==="Tutti"||state.filtro==="Redditività" ? `
+  <div class="grid2">
+    <div class="panel" style="display:grid;gap:14px"><h3>Scomposizione del ROE</h3>
+      <div class="tree">
+        <div class="row"><div class="node main"><div class="nv">${pct(roe)}</div><div class="nl">ROE</div></div></div>
+        <div class="row"><span class="op">=</span>
+          <div class="node"><div class="nv">${pct(roi)}</div><div class="nl">ROI</div></div><span class="op">×</span>
+          <div class="node"><div class="nv">${x2(lev)}</div><div class="nl">Leverage</div></div><span class="op">×</span>
+          <div class="node"><div class="nv">${x2(inc)}</div><div class="nl">Utile / RO</div></div></div>
+        <div class="row" style="font-size:.85rem;color:var(--muted)">ROI scomposto:</div>
+        <div class="row">
+          <div class="node"><div class="nv">${pct(ros)}</div><div class="nl">ROS</div></div><span class="op">×</span>
+          <div class="node"><div class="nv">${x2(rot)}</div><div class="nl">Rotazione CI</div></div><span class="op">=</span>
+          <div class="node"><div class="nv">${pct(ros*rot)}</div><div class="nl">ROI</div></div></div>
+      </div>
+      <p class="note">Verifica: ${pct(roi)} × ${x2(lev)} × ${x2(inc)} = <b class="num">${pct(roi*lev*inc)}</b>. Il terzo fattore (Utile / Reddito operativo) misura quanto del reddito operativo resta dopo gestione finanziaria e imposte.</p>
+    </div>
+    <div class="panel" style="display:grid;gap:10px;align-content:start"><h3>La leva finanziaria</h3>
+      <p>ROI <b class="num">${pct(roi)}</b> ${roi>rod?"&gt;":"≤"} ROD <b class="num">${pct(rod)}</b></p>
+      <p class="note">${roi>rod
+        ? "<b>Leva positiva.</b> Ogni euro preso in prestito rende (ROI) più di quanto costa (ROD). Aumentare i debiti, a parità di altre condizioni, fa salire il ROE. Ma aumenta anche il rischio: se il ROI scende sotto il ROD l'effetto si rovescia."
+        : "<b>Leva negativa.</b> I debiti costano più di quanto rendono gli investimenti. Più l'azienda si indebita, più il ROE scende. Conviene ridurre i debiti o migliorare la redditività operativa."}</p>
+      <p class="note">Formula classica: ROE ≈ [ROI + (ROI − ROD) × Debiti finanziari / PN] × (1 − aliquota). È un'approssimazione: la scomposizione a sinistra è invece un'identità esatta.</p>
+    </div>
+  </div>`:""}`;
+}
+
+/* ---- 6 Simulatore ---- */
+function applyScen(d, s){
+  const base = compute(d);
+  const n = {...d};
+  n.ricavi = d.ricavi*(1+s.ric/100);
+  n.costiMP = d.costiMP*(1+s.ric/100);
+  n.personale = d.personale*(1+s.pers/100);
+  const t = base.ce.ante>0 ? d.imposte/base.ce.ante : 0.279;
+  const mid = compute(n);
+  n.imposte = Math.max(0, mid.ce.ante*t);
+  const dUtile = compute(n).ce.utile - base.ce.utile;
+  n.liquidita = d.liquidita + dUtile;
+  const x = Math.min(s.cons, n.debBancheBreve); n.debBancheBreve -= x; n.mutui += x;
+  n.capitale += s.cap; n.liquidita += s.cap;
+  const y = n.credClienti*s.inc/100; n.credClienti -= y; n.liquidita += y;
+  if(n.liquidita<0){ n.debBancheBreve += -n.liquidita; n.liquidita = 0; }
+  return n;
+}
+const SLIDERS = [
+  {k:"ric", l:"Variazione dei ricavi", min:-30, max:30, step:1, u:"%", h:"Le materie prime variano nella stessa misura (costo variabile); servizi e affitti restano fissi."},
+  {k:"pers", l:"Variazione del costo del personale", min:-30, max:30, step:1, u:"%", h:"Assunzioni, rinnovi contrattuali, riduzione dell'organico."},
+  {k:"cons", l:"Consolidamento: trasforma debiti bancari a breve in mutuo", min:0, max:300000, step:10000, u:"€", h:"Rinegoziare i debiti a breve allungando la scadenza."},
+  {k:"cap", l:"Aumento di capitale sociale in denaro", min:0, max:500000, step:10000, u:"€", h:"I soci versano nuovo denaro: aumentano patrimonio netto e cassa."},
+  {k:"inc", l:"Incasso anticipato dei crediti verso clienti", min:0, max:50, step:5, u:"%", h:"Es. sollecitare i clienti o cedere i crediti (factoring pro soluto)."},
+];
+function simula(r){
+  const s=state.scen;
+  const n = applyScen(state.data, s); const r2 = compute(n);
+  const ids=["roe","roi","ros","rod","lev","aut","cop2","cr","qr","ggc"];
+  const higherBetter = {lev:false, ggc:false, rod:false};
+  const rows = ids.map(id=>{ const i=IND.find(x=>x.id===id); const a=i.f(r).v, b=i.f(r2).v; const dv=b-a;
+    const better = (higherBetter[id]===false)? dv<0 : dv>0; const cls = Math.abs(dv)<1e-6?"eq": better?"up":"down";
+    return `<tr><td>${i.n}</td><td class="r num">${fmtT(a,i.t)}</td><td class="r num">${fmtT(b,i.t)}</td><td class="r num delta ${cls}">${Math.abs(dv)<1e-6?"=":(cls==="up"?"▲ migliora":"▼ peggiora")}</td><td>${pill(i.ev(b,r2))}</td></tr>`; }).join("");
+  const mrows = [["Utile netto", r.ce.utile, r2.ce.utile],["Margine di struttura 2°", r.m.strutt2, r2.m.strutt2],["Margine di tesoreria", r.m.tesoreria, r2.m.tesoreria],["Liquidità immediate", r.sp.limm, r2.sp.limm]]
+    .map(x=>`<tr><td>${x[0]}</td><td class="r num">${eur(x[1])}</td><td class="r num">${eur(x[2])}</td><td class="r num delta ${x[2]>x[1]?"up":x[2]<x[1]?"down":"eq"}">${x[2]===x[1]?"=":(x[2]>x[1]?"+":"")+eur(x[2]-x[1])}</td></tr>`).join("");
+  return `
+  ${intro("6 · Simulatore «E se…?»", "Il controller usa gli indici per decidere. Muovi i cursori e osserva quali indici cambiano e quali no: è il modo più rapido per capire cosa misura davvero ciascuno. Partenza: il bilancio della sezione 1.")}
+  <div class="grid2">
+    <div class="panel"><div class="blockh"><h3>Decisioni</h3><button class="btn ghost" id="sReset">Riporta a zero</button></div>
+      ${SLIDERS.map(x=>`<div class="slider"><div class="top"><label for="sl-${x.k}">${x.l}</label><b class="num" id="sv-${x.k}">${x.u==="%"?(s[x.k]>0?"+":"")+s[x.k]+"%":eur(s[x.k])}</b></div>
+        <input type="range" id="sl-${x.k}" data-k="${x.k}" min="${x.min}" max="${x.max}" step="${x.step}" value="${s[x.k]}"><small>${x.h}</small></div>`).join("")}
+      <p class="note" style="margin-top:12px">Ipotesi semplificate: le variazioni di utile si traducono in variazioni di cassa; se la cassa diventa negativa, la differenza è coperta con scoperto bancario. Le imposte seguono l'aliquota effettiva di partenza.</p>
+    </div>
+    <div style="display:grid;gap:20px;align-content:start">
+      <div class="panel"><h3>Effetto sugli indici</h3><div class="tbl-wrap"><table><thead><tr><th>Indice</th><th class="r">Prima</th><th class="r">Dopo</th><th class="r">Effetto</th><th>Giudizio</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+      <div class="panel"><h3>Effetto su utile e margini</h3><div class="tbl-wrap"><table><thead><tr><th>Grandezza</th><th class="r">Prima</th><th class="r">Dopo</th><th class="r">Differenza</th></tr></thead><tbody>${mrows}</tbody></table></div></div>
+    </div>
+  </div>
+  <div class="panel"><h3>Cosa osservare</h3><div class="grid2" style="margin-top:10px">
+    <p class="note"><b>Consolidamento dei debiti:</b> migliorano current ratio, quick ratio e margini, ma ROE e ROI non cambiano. Cambia la struttura delle scadenze, non la redditività.</p>
+    <p class="note"><b>Aumento di capitale:</b> migliora la solidità (leverage giù, autonomia su) ma il ROE scende, perché lo stesso utile si divide su un patrimonio più grande.</p>
+    <p class="note"><b>Incasso dei crediti:</b> il current ratio non cambia (un credito diventa cassa, tutto resta nell'attivo circolante) ma i giorni di incasso scendono.</p>
+    <p class="note"><b>Ricavi:</b> con costi fissi invariati, una piccola variazione dei ricavi produce una variazione più che proporzionale del reddito operativo. È la leva operativa.</p>
+  </div></div>`;
+}
+function bindSimula(){
+  main.querySelectorAll("input[type=range]").forEach(sl=>{
+    sl.addEventListener("input", ()=>{ state.scen[sl.dataset.k]=Number(sl.value); save(); const y=window.scrollY; render(); window.scrollTo({top:y}); const e=document.getElementById(sl.id); if(e) e.focus(); });
+  });
+  document.getElementById("sReset").onclick=()=>{ state.scen={ric:0,pers:0,cons:0,cap:0,inc:0}; save(); render(); };
+}
+
+/* ---- 7 Quiz ---- */
+const TEORIA = [
+  {q:"Nel criterio finanziario, dove va un credito verso clienti esigibile oltre 12 mesi?", o:["Liquidità differite","Immobilizzazioni","Disponibilità","Liquidità immediate"], a:1, e:"Conta la scadenza, non la natura: tornerà denaro dopo più di un anno, quindi è un impiego a lungo termine."},
+  {q:"Nel criterio finanziario il capitale circolante netto coincide sempre con…", o:["Il margine di tesoreria","Il margine di struttura primario","Il margine di struttura secondario","Il patrimonio netto"], a:2, e:"Poiché impieghi = fonti, Attivo circolante − Passività correnti = PN + Passività consolidate − Immobilizzazioni."},
+  {q:"Se il ROI è maggiore del ROD, un aumento dei debiti finanziari, a parità di altre condizioni…", o:["Riduce il ROE","Non cambia il ROE","Aumenta il ROE","Riduce il ROI"], a:2, e:"È la leva finanziaria positiva: il denaro preso in prestito rende più di quanto costa, e la differenza va ai soci."},
+  {q:"Il MOL (EBITDA) è un risultato calcolato prima di…", o:["Costo del personale","Ammortamenti, accantonamenti, gestione finanziaria e imposte","Consumi di materie","Valore aggiunto"], a:1, e:"MOL = Valore aggiunto − Personale. Ammortamenti, oneri finanziari e imposte vengono dopo."},
+  {q:"Il quick ratio differisce dal current ratio perché esclude…", o:["Le liquidità immediate","I crediti verso clienti","Le rimanenze di magazzino","I debiti verso fornitori"], a:2, e:"Il magazzino è la parte dell'attivo circolante più lenta e incerta da trasformare in denaro."},
+  {q:"Nel criterio finanziario, l'utile destinato a dividendi va classificato tra…", o:["Patrimonio netto","Passività consolidate","Passività correnti","Liquidità differite"], a:2, e:"Una volta deliberata la distribuzione, è un debito verso i soci da pagare entro breve."},
+  {q:"ROI = ROS × …", o:["Leverage","Rotazione del capitale investito","ROD","Indice di autonomia finanziaria"], a:1, e:"(RO / Ricavi) × (Ricavi / Capitale investito) = RO / Capitale investito."},
+  {q:"Dal bilancio 2016 (D.Lgs. 139/2015) il conto economico civilistico…", o:["Ha aggiunto l'area straordinaria","Non prevede più l'area straordinaria","Ha eliminato il costo del personale","È diventato facoltativo"], a:1, e:"La sezione E (proventi e oneri straordinari) è stata eliminata: quei componenti ora si trovano in A5 o B14 secondo la natura."},
+  {q:"Un aumento di capitale sociale in denaro, a parità di utile, fa…", o:["Salire il ROE","Scendere il ROE","Scendere l'autonomia finanziaria","Salire il leverage"], a:1, e:"Lo stesso utile si divide su un patrimonio netto più grande, quindi il ROE scende, mentre la solidità migliora."},
+];
+let quizState = {mode:"calc", calc:null, teo:0, done:false, ok:0, tot:0};
+function newCalc(){ const pool=IND.filter(i=>!["ggf"].includes(i.id)); quizState.calc = pool[Math.floor(Math.random()*pool.length)].id; quizState.done=false; }
+function quiz(r){
+  if(!quizState.calc) newCalc();
+  const i = IND.find(x=>x.id===quizState.calc), o=i.f(r);
+  const t = TEORIA[quizState.teo % TEORIA.length];
+  return `
+  ${intro("7 · Mettiti alla prova", "Due tipi di esercizio: calcolare un indice con i numeri della tua azienda (li trovi nelle sezioni 2 e 3) e rispondere a domande di teoria. Una risposta di calcolo è considerata giusta se si discosta meno del 2% dal valore esatto.")}
+  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+    <div class="filters"><button class="chip" aria-pressed="${quizState.mode==="calc"}" data-m="calc">Esercizi di calcolo</button><button class="chip" aria-pressed="${quizState.mode==="teo"}" data-m="teo">Domande di teoria</button></div>
+    <span class="score">Risposte corrette: ${quizState.ok} / ${quizState.tot}</span>
+  </div>
+  ${quizState.mode==="calc" ? `
+  <div class="panel q">
+    <div class="grp eyebrow">${i.g}</div>
+    <h3>Calcola: ${i.n}</h3>
+    <p style="color:var(--muted)">${i.full}. ${i.t==="pct"?"Rispondi in percentuale (es. 12,5).": i.t==="gg"?"Rispondi in giorni (es. 64)." :"Rispondi con un numero (es. 1,42)."}${i.id==="ggc"?` ${state.iva?"Considera l'IVA al 22%.":"Senza IVA."}`:""}</p>
+    <details><summary style="cursor:pointer;color:var(--accent);font-weight:600">Mostra un suggerimento</summary><p class="note" style="margin-top:8px">Formula: ${esc(o.nl)} ÷ ${esc(o.dl)}${o.k?" "+o.k:""}${i.t==="pct"?" × 100":""}</p></details>
+    <div class="answer"><input id="ans" inputmode="decimal" placeholder="La tua risposta" ${quizState.done?"disabled":""}><button class="btn" id="check" ${quizState.done?"disabled":""}>Verifica</button><button class="btn ghost" id="next">Nuovo esercizio</button></div>
+    <div id="fb"></div>
+  </div>` : `
+  <div class="panel q">
+    <div class="eyebrow">Domanda ${quizState.teo % TEORIA.length + 1} di ${TEORIA.length}</div>
+    <h3>${t.q}</h3>
+    <div class="opts">${t.o.map((x,k)=>`<button class="opt" data-k="${k}">${x}</button>`).join("")}</div>
+    <div id="fb"></div>
+    <div><button class="btn ghost" id="nextT">Domanda successiva</button></div>
+  </div>`}`;
+}
+function bindQuiz(){
+  main.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{ quizState.mode=b.dataset.m; render(); });
+  const r = compute(state.data), fb = document.getElementById("fb");
+  if(quizState.mode==="calc"){
+    const i = IND.find(x=>x.id===quizState.calc), o=i.f(r);
+    const target = i.t==="pct"? o.v*100 : o.v;
+    const inp=document.getElementById("ans");
+    const check=()=>{ if(quizState.done) return; const raw=inp.value.trim(); if(!raw){ fb.innerHTML=`<div class="feedback ko">Scrivi un numero prima di verificare.</div>`; return; }
+      const v=Number(raw.replace("%","").replace(/\./g,"").replace(",",".")); if(!isFinite(v)){ fb.innerHTML=`<div class="feedback ko">Il valore inserito non è un numero. Usa la virgola per i decimali, es. 12,5.</div>`; return; }
+      const ok = isFinite(target) && Math.abs(v-target) <= Math.max(Math.abs(target)*0.02, i.t==="gg"?1:0.005);
+      quizState.done=true; quizState.tot++; if(ok) quizState.ok++;
+      fb.innerHTML = `<div class="feedback ${ok?"ok":"ko"}"><b>${ok?"Corretto.":"Non è corretto."}</b> Procedimento: ${esc(o.nl)} ${eur(o.nv)} ÷ ${esc(o.dl)} ${eur(o.dv)}${o.k?" "+o.k:""}${i.t==="pct"?" × 100":""} = <b class="num">${fmtT(o.v,i.t)}</b>.<br>${i.sig}</div>`;
+      inp.disabled=true; document.getElementById("check").disabled=true;
+      document.querySelector(".score").textContent=`Risposte corrette: ${quizState.ok} / ${quizState.tot}`; };
+    document.getElementById("check").onclick=check;
+    inp.addEventListener("keydown", e=>{ if(e.key==="Enter") check(); });
+    document.getElementById("next").onclick=()=>{ newCalc(); render(); };
+  } else {
+    const t = TEORIA[quizState.teo % TEORIA.length]; let answered=false;
+    main.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ if(answered) return; answered=true; const k=+b.dataset.k, ok=k===t.a;
+      quizState.tot++; if(ok) quizState.ok++;
+      main.querySelectorAll(".opt").forEach(x=>{ if(+x.dataset.k===t.a) x.classList.add("ok"); else if(x===b) x.classList.add("ko"); });
+      fb.innerHTML=`<div class="feedback ${ok?"ok":"ko"}"><b>${ok?"Corretto.":"Sbagliato."}</b> ${t.e}</div>`;
+      document.querySelector(".score").textContent=`Risposte corrette: ${quizState.ok} / ${quizState.tot}`; });
+    document.getElementById("nextT").onclick=()=>{ quizState.teo++; render(); };
+  }
+}
+
+/* ============ AVVIO ============ */
+const az = document.getElementById("azienda");
+az.value = state.azienda;
+az.addEventListener("change", ()=>{ state.azienda = az.value; save(); });
+renderTabs(); render();
+</script>
