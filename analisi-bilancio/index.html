@@ -488,40 +488,41 @@ function panoramica(r){
 }
 
 function spChart(r){
-  const W=660,H=360,top=26,bh=H-top-12, colW=170, xA=40, xP=W-40-colW;
+  const W=680,H=370,top=28,bh=H-top-12, colW=165, xA=20, xP=xA+colW;
   const sp=r.sp, tot = Math.max(sp.ci, sp.fonti, 1), Y = v => top + Math.max(v,0)/tot*bh;
   const ord = {A:["limm","ldiff","disp","imm"], P:["pcorr","pcons","pn"]};
   const seg = (keys, x) => { let y=top; return keys.map(k=>{ const v=Math.max(sp[k],0); const h=v/tot*bh; const out =
-    `<rect x="${x}" y="${y}" width="${colW}" height="${h}" fill="var(${AGG[k].c})" stroke="var(--surface)" stroke-width="2"><title>${AGG[k].l}: ${eur(sp[k])}</title></rect>`+
-    (h>30?`<text x="${x+colW/2}" y="${y+h/2-3}" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(${AGG[k].tc})">${AGG[k].l.split(" (")[0]}</text><text x="${x+colW/2}" y="${y+h/2+13}" text-anchor="middle" font-size="12" fill="var(${AGG[k].tc})">${eurK(sp[k])} · ${pct(sp[k]/tot)}</text>`:
-     h>14?`<text x="${x+colW/2}" y="${y+h/2+4}" text-anchor="middle" font-size="11" fill="var(${AGG[k].tc})">${AGG[k].l.split(" (")[0]} ${pct(sp[k]/tot)}</text>`:"");
+    `<rect x="${x}" y="${y}" width="${colW}" height="${h}" fill="var(${AGG[k].c})" stroke="var(--surface)" stroke-width="1.5"><title>${AGG[k].l}: ${eur(sp[k])}</title></rect>`+
+    (h>30?`<text x="${x+colW/2}" y="${y+h/2-3}" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(${AGG[k].tc})" stroke="var(${AGG[k].c})" stroke-width="4" paint-order="stroke">${AGG[k].l.split(" (")[0]}</text><text x="${x+colW/2}" y="${y+h/2+13}" text-anchor="middle" font-size="12" fill="var(${AGG[k].tc})" stroke="var(${AGG[k].c})" stroke-width="4" paint-order="stroke">${eurK(sp[k])} · ${pct(sp[k]/tot)}</text>`:
+     h>14?`<text x="${x+colW/2}" y="${y+h/2+4}" text-anchor="middle" font-size="11" fill="var(${AGG[k].tc})" stroke="var(${AGG[k].c})" stroke-width="4" paint-order="stroke">${AGG[k].l.split(" (")[0]} ${pct(sp[k]/tot)}</text>`:"");
     y+=h; return out; }).join(""); };
-  // linee di riferimento: confine a sinistra vs confine a destra
+  // livelli dei margini: confine impieghi (y1) prolungato sulle fonti vs confine fonti (y2)
   const refs = [
     {l:"Margine di tesoreria", v:r.m.tesoreria, y1:Y(sp.limm+sp.ldiff), y2:Y(sp.pcorr)},
     {l:"Margine di struttura 2° (= CCN)", v:r.m.strutt2, y1:Y(sp.limm+sp.ldiff+sp.disp), y2:Y(sp.pcorr)},
     {l:"Margine di struttura 1°", v:r.m.strutt1, y1:Y(sp.limm+sp.ldiff+sp.disp), y2:Y(sp.pcorr+sp.pcons)},
   ];
-  let last=-99; refs.forEach(f=>{ f.ty=Math.max((f.y1+f.y2)/2, last+36); last=f.ty; });
-  const x1=xA+colW, x2=xP, mid=W/2;
-  const lines = refs.map(f=>{ const c = f.v>=0?"var(--good)":"var(--bad)";
-    return `<g><line x1="${x1}" x2="${x1+16}" y1="${f.y1}" y2="${f.y1}" stroke="${c}" stroke-width="2"/>
-      <line x1="${x2-16}" x2="${x2}" y1="${f.y2}" y2="${f.y2}" stroke="${c}" stroke-width="2"/>
-      <path d="M${x1+16} ${f.y1} L${x2-16} ${f.y2}" stroke="${c}" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>
-      <rect x="${mid-92}" y="${f.ty-13}" width="184" height="27" rx="4" fill="var(--surface)" stroke="${c}"/>
-      <text x="${mid}" y="${f.ty-2}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${f.l}</text>
-      <text x="${mid}" y="${f.ty+10}" text-anchor="middle" font-size="11" font-weight="700" fill="${c}">${eur(f.v)}</text></g>`; }).join("");
+  const xEnd = xP+colW, lx = xEnd+80;
+  let last=-99; refs.forEach(f=>{ f.ty=Math.max((f.y1+f.y2)/2, last+40); last=f.ty; });
+  const lines = refs.map((f,i)=>{ const c = f.v>=0?"var(--good)":"var(--bad)", bx = xEnd+14+i*18;
+    const ya=Math.min(f.y1,f.y2), yb=Math.max(f.y1,f.y2,ya+3);
+    return `<g><line x1="${xA}" x2="${bx}" y1="${f.y1}" y2="${f.y1}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <line x1="${xP}" x2="${bx}" y1="${f.y2}" y2="${f.y2}" stroke="var(--ink)" stroke-width="1.2"/>
+      <rect x="${bx-4}" y="${ya}" width="8" height="${yb-ya}" fill="${c}"><title>${f.l}: ${eur(f.v)}</title></rect>
+      <path d="M${bx+4} ${(ya+yb)/2} L${lx-6} ${f.ty}" stroke="${c}" stroke-width="1" fill="none"/>
+      <text x="${lx}" y="${f.ty-3}" font-size="11.5" fill="var(--ink)">${f.l}</text>
+      <text x="${lx}" y="${f.ty+12}" font-size="12.5" font-weight="700" fill="${c}">${eur(f.v)} ${f.v>=0?"▲ positivo":"▼ negativo"}</text></g>`; }).join("");
   const neg = sp.pn<0 ? `<text x="${xP+colW/2}" y="${H-2}" text-anchor="middle" font-size="11" fill="var(--bad)">Patrimonio netto negativo: ${eur(sp.pn)}</text>`:"";
   return `<div class="tbl-wrap"><svg viewBox="0 0 ${W} ${H}" style="min-width:520px" role="img" aria-label="Impieghi e fonti ordinati per liquidità ed esigibilità decrescente, con margini di tesoreria e di struttura">
-    <text x="${xA+colW/2}" y="15" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent)">IMPIEGHI ${eurK(sp.ci)}</text>
-    <text x="${xP+colW/2}" y="15" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fonti)">FONTI ${eurK(sp.fonti)}</text>
-    ${seg(ord.A, xA)}${seg(ord.P, xP)}${lines}${neg}</svg></div>
+    <text x="${xA+colW/2}" y="17" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent)">IMPIEGHI ${eurK(sp.ci)}</text>
+    <text x="${xP+colW/2}" y="17" text-anchor="middle" font-size="12" font-weight="700" fill="var(--fonti)">FONTI ${eurK(sp.fonti)}</text>
+    ${seg(ord.A, xA)}${seg(ord.P, xP)}<text x="${lx}" y="17" font-size="12" font-weight="700" fill="var(--muted)">LIVELLI DEI MARGINI</text>${lines}${neg}</svg></div>
   <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th>Riferimento</th><th>Confronto</th><th class="r">Valore</th></tr></thead><tbody>
     <tr><td><b>Margine di tesoreria</b></td><td>(Liquidità immediate + differite) − Passività correnti<br><span class="mono" style="font-size:.82rem">${eur(sp.limm+sp.ldiff)} − ${eur(sp.pcorr)}</span></td><td class="r" style="font-family:var(--font-data)">${eur(r.m.tesoreria)} ${pill(r.m.tesoreria>=0?"good":"bad")}</td></tr>
     <tr><td><b>Margine di struttura 2°</b></td><td>(Patrimonio netto + Passività consolidate) − Immobilizzazioni<br><span class="mono" style="font-size:.82rem">${eur(sp.pn+sp.pcons)} − ${eur(sp.imm)}</span></td><td class="r num">${eur(r.m.strutt2)} ${pill(r.m.strutt2>=0?"good":"bad")}</td></tr>
     <tr><td><b>Margine di struttura 1°</b></td><td>Patrimonio netto − Immobilizzazioni<br><span class="mono" style="font-size:.82rem">${eur(sp.pn)} − ${eur(sp.imm)}</span></td><td class="r num">${eur(r.m.strutt1)} ${pill(r.m.strutt1>=0?"good":r.m.strutt2>=0?"warn":"bad")}</td></tr>
   </tbody></table></div>
-  <p class="note" style="margin-top:10px">Come leggere le linee: ognuna unisce due confini. Se il confine a sinistra è più in basso di quello a destra, il margine è positivo, cioè gli impieghi sopra la linea superano le fonti con la stessa scadenza.</p>`;
+  <p class="note" style="margin-top:10px">Come leggere i livelli: la linea <b>tratteggiata</b> prolunga sulle fonti un confine degli impieghi, la linea <b>continua</b> è il confine delle fonti da confrontare. La barra a destra misura la distanza tra le due: <b>verde</b> se il confine degli impieghi sta più in basso (margine positivo), <b>rossa</b> se sta più in alto (margine negativo).</p>`;
 }
 
 /* ---- 1 Bilancio ---- */
