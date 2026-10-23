@@ -212,8 +212,36 @@ describe('calcolaRoadmap', () => {
 
       it('0 sistemi: tappa 5 non completata', () => {
         const r = calcolaRoadmap(conf, [], oggi, [], [rep('excel', null, dopo)]);
-        expect(r.tappe[4].stato).not.toBe('completata');
+        expect(r.tappe[4].stato).toBe('da_fare');
         expect(r.percentuale).toBe(20);
+      });
+
+      it('solo l\'Excel è superato: Word aggiornati, Excel precedente all\'ultima conferma', () => {
+        // A confermato il 01/10, B il 03/10; i Word seguono ciascuno la propria conferma, l'Excel no
+        const conferme = sin.map((x, i) => ({ ...x, confermatoIl: i === 0 ? '2026-10-01T10:00:00.000Z' : '2026-10-03T10:00:00.000Z' }));
+        const r = calcolaRoadmap(conf, l, oggi, conferme, [
+          rep('word', l[0], '2026-10-02T10:00:00.000Z'),
+          rep('word', l[1], '2026-10-04T10:00:00.000Z'),
+          rep('excel', null, '2026-10-02T10:00:00.000Z'),
+        ]);
+        expect(r.tappe[4].stato).toBe('in_corso');
+        expect(r.tappe[4].dettaglio).toBe('2 di 3 report');
+        expect(r.percentuale).toBe(80);
+        expect(r.prossimaAzione).toBe('Genera i report aggiornati');
+      });
+
+      it('uno dei due Word è superato: non completata', () => {
+        // A riconfermato il 03/10 dopo il suo Word del 02/10; B e l'Excel aggiornati
+        const conferme = sin.map((x, i) => ({ ...x, confermatoIl: i === 0 ? '2026-10-03T10:00:00.000Z' : '2026-10-01T10:00:00.000Z' }));
+        const r = calcolaRoadmap(conf, l, oggi, conferme, [
+          rep('word', l[0], '2026-10-02T10:00:00.000Z'),
+          rep('word', l[1], '2026-10-02T10:00:00.000Z'),
+          rep('excel', null, '2026-10-04T10:00:00.000Z'),
+        ]);
+        expect(r.tappe[4].stato).toBe('in_corso');
+        expect(r.tappe[4].dettaglio).toBe('2 di 3 report');
+        expect(r.percentuale).toBe(80);
+        expect(r.prossimaAzione).toBe('Genera i report aggiornati');
       });
 
       it('tappa 4 non completata: tappa 5 da fare', () => {

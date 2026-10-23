@@ -32,10 +32,11 @@ Le regole di classificazione (domande del questionario, esiti, obblighi, date di
 
 - **Impostazioni studio**: nome, indirizzo, partita IVA, email e telefono dello studio (menu **Impostazioni**) compaiono nell'intestazione dei report.
 - **Genera report** (scheda cliente): si sceglie una cartella e l'app scrive un Word per ogni sistema con valutazione confermata e un Excel di inventario per il cliente, poi elenca i file creati. I sistemi senza classificazione confermata sono esclusi e indicati con «Non incluso: classificazione non confermata».
-- **Nomi dei file**: `AI-Act_<cliente>_<sistema>_<aaaa-mm-gg>.docx` e `AI-Act_<cliente>_inventario_<aaaa-mm-gg>.xlsx`, ripuliti da caratteri non validi su Windows e macOS (spazi come `-`, al massimo 80 caratteri per parte). Rigenerando lo stesso giorno i file vengono sovrascritti.
+- **Nomi dei file**: `AI-Act_<cliente>_<sistema>_<aaaa-mm-gg>.docx` e `AI-Act_<cliente>_inventario_<aaaa-mm-gg>.xlsx`, ripuliti da caratteri non validi su Windows e macOS (spazi come `-`, al massimo 80 caratteri per parte). Rigenerando lo stesso giorno i file vengono sovrascritti. Se due sistemi producono lo stesso nome (anche solo per maiuscole e minuscole diverse), al secondo si aggiunge `_2`, al terzo `_3` e così via (es. `AI-Act_Acme-Srl_Chatbot_2026-10-23_2.docx`).
 - **Excel**: fogli `Inventario` (un sistema per riga) e `Obblighi` (solo sistemi con valutazione confermata), date come vere celle data.
 - **Esporta Word**: dalla pagina esito di una valutazione confermata si esporta il Word del singolo sistema, con «Salva con nome».
 - **Regole non validate**: se l'esito dipende da voci non `validata`, il Word riporta in evidenza l'avviso «Documento basato su regole non ancora validate dal consulente: verificare prima della consegna.». Ogni Word termina con la nota di riserva (strumento di supporto, non parere legale).
+- **Regole non caricate**: se il file delle regole non si carica, «Genera report» (scheda cliente) ed «Esporta Word» (pagina esito) sono disabilitati con il messaggio «Report non disponibili: regole non caricate.».
 - **Anteprima web** (`npm run dev`): nessuna finestra di dialogo, i file vengono scaricati dal browser.
 - La roadmap arriva al 100% («Assessment completato») quando i report sono generati e aggiornati.
 
