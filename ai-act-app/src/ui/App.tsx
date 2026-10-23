@@ -2,6 +2,7 @@ import { HashRouter, Link, Route, Routes } from 'react-router-dom';
 import { Dashboard } from './pagine/Dashboard';
 import { SchedaCliente } from './pagine/SchedaCliente';
 import { SchedaSistema } from './pagine/SchedaSistema';
+import { Questionario } from './pagine/Questionario';
 import { Cestino } from './pagine/Cestino';
 import './stile.css';
 
@@ -35,6 +36,7 @@ export default function App({ erroreBackup = null, ripristinato = false }: Props
           <Route path="/clienti/:id" element={<SchedaCliente />} />
           <Route path="/clienti/:id/sistemi/nuovo" element={<SchedaSistema />} />
           <Route path="/sistemi/:id" element={<SchedaSistema />} />
+          <Route path="/sistemi/:id/valutazione" element={<Questionario />} />
           <Route path="/cestino" element={<Cestino />} />
         </Routes>
       </main>

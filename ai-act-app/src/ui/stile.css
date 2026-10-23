@@ -54,3 +54,14 @@ a { color: var(--primario); }
 .avviso-avvio { margin: 0; border-radius: 0; border-width: 0 0 1px; }
 .esito-backup { flex-basis: 100%; margin: 0; }
 .esito-avvio { margin: 0; padding: 10px 24px; background: var(--superficie); border-bottom: 1px solid var(--ok); color: var(--ok); }
+.riquadro-valutazione { margin-top: 24px; background: var(--superficie); border: 1px solid var(--bordo); border-radius: 8px; padding: 16px; }
+.riquadro-valutazione h2 { margin-top: 0; }
+.stato-valutazione { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.classe-valutazione { font-weight: 700; }
+.badge-rivedere { background: #fef3c7; border: 1px solid #b45309; color: #92400e; border-radius: 999px; padding: 2px 10px; font-size: .8rem; }
+.avanzamento { display: flex; gap: 8px; align-items: center; margin: 8px 0 16px; }
+.avanzamento progress { flex: 1; }
+.domanda { background: var(--superficie); border: 1px solid var(--bordo); border-radius: 8px; padding: 12px 16px; margin: 0 0 12px; }
+.domanda legend { font-weight: 600; padding: 0 4px; }
+.domanda-riferimento { margin: 4px 0; font-size: .85rem; color: var(--testo-tenue); }
+.domanda-opzioni { display: flex; gap: 16px; margin-top: 8px; }

@@ -6,6 +6,7 @@ import { ErroreValidazione } from '../../archivio/errori';
 import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
 import { conferma } from '../conferma';
+import { RiquadroValutazione } from '../componenti/RiquadroValutazione';
 
 interface Valori {
   nome: string;
@@ -185,6 +186,7 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
           )}
         </div>
       </form>
+      {id && <RiquadroValutazione sistemaId={id} />}
     </section>
   );
 }
