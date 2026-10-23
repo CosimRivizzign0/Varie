@@ -175,6 +175,8 @@ Regole:
 
 **Prerequisito della Fase 2:** verificare lo stato del "Digital Omnibus" (proposta della
 Commissione, nov. 2025) per le date applicabili agli obblighi alto rischio (art. 113).
+**Aggiornamento 2026-10-23:** adottato come Reg. (UE) 2026/1744; alto rischio Allegato III
+dal 02/12/2027, Allegato I dal 02/08/2028 — dettagli nella spec della Fase 2.
 
 ## 10. Limiti noti
 
