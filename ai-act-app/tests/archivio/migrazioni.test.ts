@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { creaSqlJsDriver } from '../../src/archivio/sqljsDriver';
-import { migra } from '../../src/archivio/migrazioni';
+import { MIGRAZIONI, migra } from '../../src/archivio/migrazioni';
 
 describe('migra', () => {
   it('su db vuoto porta a versione 1, è idempotente e crea le tabelle', async () => {
@@ -41,5 +41,16 @@ describe('migra', () => {
         },
       ]),
     ).rejects.toThrow();
+  });
+});
+
+describe('migra con database di una versione più recente', () => {
+  it('rifiuta user_version maggiore delle migrazioni note', async () => {
+    const driver = await creaSqlJsDriver();
+    await migra(driver);
+    await driver.batch([{ sql: `PRAGMA user_version = ${MIGRAZIONI.length + 1}` }]);
+    await expect(migra(driver)).rejects.toThrow(
+      'Il backup proviene da una versione più recente dell\'app.',
+    );
   });
 });

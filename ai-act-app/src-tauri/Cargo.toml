@@ -1,0 +1,20 @@
+[package]
+name = "ai-act-assessment"
+version = "0.1.0"
+description = "AI Act Assessment"
+edition = "2021"
+publish = false
+
+[workspace]
+members = ["store"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+ai-act-store = { path = "store" }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }

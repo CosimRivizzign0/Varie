@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { ambienteTauri, esportaBackup, ricarica, ripristinaBackup } from '../../archivio/avvio';
 import type { Cliente } from '../../domain/tipi';
 import { calcolaRoadmap, type Roadmap } from '../../domain/roadmap';
 import { normalizzaPartitaIva } from '../../domain/partitaIva';
@@ -12,6 +14,59 @@ interface Riga {
 }
 
 const TAPPE = ['Anagrafica', 'Inventario', 'Questionario', 'Classificazione', 'Report'] as const;
+
+const FILTRO_DB = [{ name: 'Database', extensions: ['db'] }];
+
+function messaggioDi(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+/** Esporta/Ripristina backup: solo nell'app desktop. */
+function MenuBackup() {
+  const [inCorso, setInCorso] = useState(false);
+  const [esito, setEsito] = useState<string | null>(null);
+  const [errore, setErrore] = useState<string | null>(null);
+
+  async function esegui(azione: () => Promise<void>) {
+    if (inCorso) return;
+    setInCorso(true);
+    setEsito(null);
+    setErrore(null);
+    try {
+      await azione();
+    } catch (e) {
+      setErrore(messaggioDi(e));
+    } finally {
+      setInCorso(false);
+    }
+  }
+
+  const esporta = () =>
+    esegui(async () => {
+      const dest = await save({ defaultPath: 'ai-act-backup.db', filters: FILTRO_DB });
+      if (!dest) return;
+      await esportaBackup(dest);
+      setEsito('Backup esportato.');
+    });
+
+  const ripristina = () =>
+    esegui(async () => {
+      const sorgente = await open({ multiple: false, directory: false, filters: FILTRO_DB });
+      if (!sorgente) return;
+      if (!window.confirm('Ripristinare il backup? I dati attuali verranno salvati in un backup prima della sostituzione.')) return;
+      await ripristinaBackup(sorgente);
+      ricarica();
+    });
+
+  return (
+    <>
+      <button type="button" className="pulsante" disabled={inCorso} onClick={esporta}>Esporta backup</button>
+      <button type="button" className="pulsante" disabled={inCorso} onClick={ripristina}>Ripristina backup</button>
+      {esito && <p className="esito-backup" role="status">{esito}</p>}
+      {errore && <p className="avviso esito-backup" role="alert">{errore}</p>}
+    </>
+  );
+}
 
 export function Dashboard() {
   const repo = useRepository();
@@ -54,6 +109,7 @@ export function Dashboard() {
         <h1>Clienti</h1>
         <Link className="pulsante pulsante-primario" to="/clienti/nuovo">Nuovo cliente</Link>
         <Link className="pulsante" to="/cestino">Cestino</Link>
+        {ambienteTauri() && <MenuBackup />}
       </div>
       <div className="filtri">
         <input

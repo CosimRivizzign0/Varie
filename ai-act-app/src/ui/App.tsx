@@ -5,12 +5,22 @@ import { SchedaSistema } from './pagine/SchedaSistema';
 import { Cestino } from './pagine/Cestino';
 import './stile.css';
 
-export default function App() {
+interface Props {
+  /** Errore del backup automatico all'avvio: avviso non bloccante. */
+  erroreBackup?: string | null;
+}
+
+export default function App({ erroreBackup = null }: Props) {
   return (
     <HashRouter>
       <header className="intestazione">
         <Link to="/">AI Act Assessment</Link>
       </header>
+      {erroreBackup && (
+        <p className="avviso avviso-avvio" role="alert">
+          Backup automatico non riuscito: {erroreBackup}
+        </p>
+      )}
       <main className="contenuto">
         <Routes>
           <Route path="/" element={<Dashboard />} />

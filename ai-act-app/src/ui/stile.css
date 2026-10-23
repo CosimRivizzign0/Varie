@@ -51,3 +51,5 @@ a { color: var(--primario); }
 .errore-campo { color: var(--errore); font-size: .875rem; }
 .avviso { background: #fef2f2; border: 1px solid var(--errore); color: var(--errore); padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
 .log li, .elenco-sistemi li { padding: 4px 0; border-bottom: 1px solid var(--bordo); }
+.avviso-avvio { margin: 0; border-radius: 0; border-width: 0 0 1px; }
+.esito-backup { flex-basis: 100%; margin: 0; }

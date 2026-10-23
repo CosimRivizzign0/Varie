@@ -56,6 +56,9 @@ export const MIGRAZIONI: Istruzione[][] = [
 export async function migra(driver: SqlDriver): Promise<number> {
   const righe = await driver.select<{ user_version: number }>('PRAGMA user_version');
   const attuale = righe[0]?.user_version ?? 0;
+  if (attuale > MIGRAZIONI.length) {
+    throw new Error("Il backup proviene da una versione più recente dell'app.");
+  }
   for (let n = attuale + 1; n <= MIGRAZIONI.length; n++) {
     // user_version non accetta parametri vincolati; n è un intero interno, non input utente.
     await driver.batch([...MIGRAZIONI[n - 1], { sql: `PRAGMA user_version = ${n}` }]);
