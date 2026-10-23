@@ -10,6 +10,13 @@ export const ETICHETTE_STATO: Record<StatoValutazione, string> = {
   confermata: 'Confermata',
 };
 
+/** Avviso per la classe modificata dal consulente (pagina Esito e Word). */
+export const AVVISO_CLASSE_MODIFICATA =
+  'Classificazione modificata dal consulente: gli obblighi elencati si riferiscono alla classe calcolata.';
+
+/** Avviso per il ruolo effettivo da definire (pagina Esito e Word). */
+export const AVVISO_RUOLO_DA_DEFINIRE = 'Ruolo del cliente da definire: sono mostrati gli obblighi di tutti i ruoli.';
+
 export interface Valutazione {
   id: string;
   sistemaId: string;

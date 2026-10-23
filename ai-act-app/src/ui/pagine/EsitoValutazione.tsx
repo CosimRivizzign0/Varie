@@ -5,7 +5,7 @@ import { salvaConNome } from '../../archivio/salvaFile';
 import { datiReportSistema } from '../../report/dati';
 import { nomeFileWord } from '../../report/nomiFile';
 import type { SistemaAI } from '../../domain/tipi';
-import type { Valutazione } from '../../domain/valutazione';
+import { AVVISO_CLASSE_MODIFICATA, AVVISO_RUOLO_DA_DEFINIRE, type Valutazione } from '../../domain/valutazione';
 import { ERRORE_REGOLE, REGOLE } from '../../regole/attive';
 import { ETICHETTE_CLASSE, type Classe } from '../../regole/tipi';
 import { useRepository } from '../RepositoryContext';
@@ -13,6 +13,7 @@ import { Campo } from '../componenti/Campo';
 import { formattaData } from '../formatoData';
 
 const CLASSI = Object.keys(ETICHETTE_CLASSE) as Classe[];
+const REGOLE_ASSENTI = ERRORE_REGOLE !== null || REGOLE === null;
 
 export function EsitoValutazione() {
   const { id } = useParams();
@@ -122,7 +123,7 @@ function Contenuto({ id }: { id: string }) {
 
   /** Word del singolo sistema con "Salva con nome"; registrato solo se il file è stato scritto. */
   async function esportaWord() {
-    if (bloccato.current || !sistema || !valutazione) return;
+    if (bloccato.current || REGOLE_ASSENTI || !sistema || !valutazione) return;
     bloccato.current = true;
     setInCorso(true);
     setErrore(null);
@@ -158,9 +159,7 @@ function Contenuto({ id }: { id: string }) {
       {classeModificata && (
         <>
           <p>Classe calcolata: {ETICHETTE_CLASSE[esito.classe]}</p>
-          <p className="avviso">
-            Classificazione modificata dal consulente: gli obblighi elencati si riferiscono alla classe calcolata.
-          </p>
+          <p className="avviso">{AVVISO_CLASSE_MODIFICATA}</p>
         </>
       )}
       {esito.trasparenza && <p>+ obblighi di trasparenza</p>}
@@ -172,7 +171,7 @@ function Contenuto({ id }: { id: string }) {
         </p>
       )}
       {esito.ruoloEffettivo === 'da_definire' && (
-        <p className="avviso">Ruolo del cliente da definire: sono mostrati gli obblighi di tutti i ruoli.</p>
+        <p className="avviso">{AVVISO_RUOLO_DA_DEFINIRE}</p>
       )}
 
       {esito.motivazione.length > 0 && (
@@ -234,7 +233,7 @@ function Contenuto({ id }: { id: string }) {
             </button>
           )}
           {confermata && (
-            <button type="button" className="pulsante pulsante-primario" disabled={inCorso} onClick={() => void esportaWord()}>
+            <button type="button" className="pulsante pulsante-primario" disabled={inCorso || REGOLE_ASSENTI} onClick={() => void esportaWord()}>
               Esporta Word
             </button>
           )}
@@ -252,6 +251,7 @@ function Contenuto({ id }: { id: string }) {
         </div>
       )}
 
+      {!modifica && confermata && REGOLE_ASSENTI && <p className="avviso">Report non disponibili: regole non caricate.</p>}
       {esportato && <p className="esito-salvataggio" role="status">File creato: {esportato}</p>}
 
       {modifica && (

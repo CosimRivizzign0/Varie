@@ -5,6 +5,7 @@ import type { ImpostazioniStudio } from '../../src/domain/report';
 import type { EsitoValutazione } from '../../src/regole/motore';
 import type { FileRegole } from '../../src/regole/tipi';
 import { datiInventario, datiReportSistema } from '../../src/report/dati';
+import { AVVISO_CLASSE_MODIFICATA, AVVISO_RUOLO_DA_DEFINIRE } from '../../src/domain/valutazione';
 
 beforeAll(() => {
   process.env.TZ = 'Europe/Rome';
@@ -103,6 +104,33 @@ describe('datiReportSistema', () => {
     expect(datiReportSistema(studio, cliente, s, nuovo, regole()).regoleNonValidate).toBe(false);
   });
 
+  it('R3 ristretta: versione regole diversa → conteggio salvato nell\'esito', () => {
+    const vecchia = (n: number) => val('v1', 's1', { versioneRegole: '0.9', esito: esito({ vociNonValidate: n }) });
+    // regole correnti tutte validate, ma la valutazione è di un'altra versione: vale il conteggio salvato
+    expect(datiReportSistema(studio, cliente, s, vecchia(2), regole()).regoleNonValidate).toBe(true);
+    // regole correnti in bozza, ma l'esito salvato non aveva voci non validate
+    expect(datiReportSistema(studio, cliente, s, vecchia(0), regole('bozza')).regoleNonValidate).toBe(false);
+  });
+
+  it('R3 ristretta: stessa versione → controllo sulle regole correnti', () => {
+    const stessa = (n: number) => val('v1', 's1', { versioneRegole: '1.0', esito: esito({ vociNonValidate: n }) });
+    expect(datiReportSistema(studio, cliente, s, stessa(0), regole('bozza')).regoleNonValidate).toBe(true);
+    expect(datiReportSistema(studio, cliente, s, stessa(2), regole()).regoleNonValidate).toBe(false);
+  });
+
+  it('ruoloDaDefinire solo se il ruolo effettivo è da definire', () => {
+    expect(datiReportSistema(studio, cliente, s, val('v1', 's1'), regole()).ruoloDaDefinire).toBe(false);
+    const v = val('v1', 's1', { esito: esito({ ruoloEffettivo: 'da_definire' }) });
+    expect(datiReportSistema(studio, cliente, s, v, regole()).ruoloDaDefinire).toBe(true);
+  });
+
+  it('avvisi condivisi con la pagina Esito: testi esatti', () => {
+    expect(AVVISO_CLASSE_MODIFICATA).toBe(
+      'Classificazione modificata dal consulente: gli obblighi elencati si riferiscono alla classe calcolata.',
+    );
+    expect(AVVISO_RUOLO_DA_DEFINIRE).toBe('Ruolo del cliente da definire: sono mostrati gli obblighi di tutti i ruoli.');
+  });
+
   it('non confermata: errore', () => {
     for (const stato of ['in_corso', 'completata'] as const) {
       expect(() => datiReportSistema(studio, cliente, s, val('v1', 's1', { stato }), regole()))
@@ -156,8 +184,17 @@ describe('datiInventario', () => {
     });
   });
 
-  it('versione regole diversa: Da rivedere; classe del consulente', () => {
-    expect(d.righe[3]).toMatchObject({ classe: 'Rischio minimo', trasparenza: 'No', daRivedere: 'Sì', nObblighi: 1 });
+  it('versione regole diversa: Da rivedere; classe del consulente con riferimento alla calcolata', () => {
+    expect(d.righe[3]).toMatchObject({
+      classe: 'Rischio minimo (modificata; obblighi riferiti a: Alto rischio)',
+      trasparenza: 'No',
+      daRivedere: 'Sì',
+      nObblighi: 1,
+    });
+  });
+
+  it('classe confermata uguale alla calcolata: solo l\'etichetta', () => {
+    expect(d.righe[0].classe).toBe('Alto rischio');
   });
 
   it('obblighi solo dei confermati, ordinati per data poi sistema (Review Focus #2)', () => {

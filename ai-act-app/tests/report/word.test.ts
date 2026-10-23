@@ -32,6 +32,7 @@ function dati(extra: Partial<DatiReportSistema> = {}): DatiReportSistema {
       { testo: 'Sorveglianza umana', riferimento: 'art. 14', dal: '02/12/2027' },
     ],
     regoleNonValidate: false,
+    ruoloDaDefinire: false,
     confermatoIl: '23/10/2026',
     versioneRegole: '1.2.0',
     norma: 'Regolamento (UE) 2024/1689',
@@ -52,6 +53,8 @@ async function testo(d: DatiReportSistema): Promise<string> {
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
 }
 
+const MODIFICATA = 'Classificazione modificata dal consulente: gli obblighi elencati si riferiscono alla classe calcolata.';
+const DA_DEFINIRE = 'Ruolo del cliente da definire: sono mostrati gli obblighi di tutti i ruoli.';
 const AVVISO = 'Documento basato su regole non ancora validate dal consulente: verificare prima della consegna.';
 const RISERVA =
   'Il presente documento è uno strumento di supporto alla valutazione di conformità al Regolamento (UE) 2024/1689 e non costituisce parere legale definitivo.';
@@ -97,6 +100,36 @@ describe('creaWord', () => {
     const t = await testo(dati({ classe: 'minimo', classeCalcolata: 'alto_rischio', notaModifica: 'Uso solo interno' }));
     expect(t).toContain('Classe calcolata: Alto rischio');
     expect(t).toContain('Uso solo interno');
+  });
+
+  it('classe modificata: nota una sola volta e avviso sugli obblighi della classe calcolata', async () => {
+    const t = await testo(dati({ classe: 'minimo', classeCalcolata: 'alto_rischio', notaModifica: 'Uso solo interno' }));
+    expect(t.split('Uso solo interno')).toHaveLength(2);
+    expect(t).not.toContain('Nota: ');
+    const avviso = t.indexOf(MODIFICATA);
+    expect(avviso).toBeGreaterThan(t.indexOf('Obblighi\n'));
+    expect(avviso).toBeLessThan(t.indexOf('Valutazione confermata il'));
+    expect(await testo(dati())).not.toContain(MODIFICATA);
+  });
+
+  it('classe modificata senza nota: l\'avviso sugli obblighi resta', async () => {
+    expect(await testo(dati({ classe: 'minimo', classeCalcolata: 'alto_rischio', notaModifica: null }))).toContain(MODIFICATA);
+  });
+
+  it('ruolo da definire: avviso vicino agli obblighi', async () => {
+    const t = await testo(dati({ ruoloDaDefinire: true }));
+    const avviso = t.indexOf(DA_DEFINIRE);
+    expect(avviso).toBeGreaterThan(t.indexOf('Obblighi\n'));
+    expect(avviso).toBeLessThan(t.indexOf('Valutazione confermata il'));
+    expect(await testo(dati())).not.toContain(DA_DEFINIRE);
+  });
+
+  it('riferimento vuoto: nessun trattino pendente nella motivazione', async () => {
+    const t = await testo(dati({ motivazione: [{ testo: 'Uso interno', riferimento: '' }, { testo: 'Altro', riferimento: '  ' }] }));
+    expect(t).toContain('Uso interno\n');
+    expect(t).toContain('Altro\n');
+    expect(t).not.toContain(' — \n');
+    expect(t).not.toMatch(/Uso interno —/);
   });
 
   it('omette Punti da approfondire se non ce ne sono', async () => {

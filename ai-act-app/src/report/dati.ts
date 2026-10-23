@@ -2,6 +2,7 @@ import { formattaData, giornoLocale } from '../domain/formatoData';
 import type { ImpostazioniStudio } from '../domain/report';
 import { RUOLI, type Cliente, type SistemaAI } from '../domain/tipi';
 import { ETICHETTE_STATO, type Valutazione } from '../domain/valutazione';
+import type { EsitoValutazione } from '../regole/motore';
 import { ETICHETTE_CLASSE, type Classe, type FileRegole } from '../regole/tipi';
 
 /** Dati del Word di un sistema. Tutte le date sono già `gg/mm/aaaa` (solo `cliente` e `sistema` restano grezzi). */
@@ -11,6 +12,8 @@ export interface DatiReportSistema {
   sistema: SistemaAI;
   ruoloEtichetta: string;
   ruoloEffettivoEtichetta: string;
+  /** Ruolo effettivo da definire: gli obblighi sono quelli di tutti i ruoli. */
+  ruoloDaDefinire: boolean;
   /** Classe del consulente (quella calcolata se non modificata). */
   classe: Classe;
   /** Classe calcolata dal motore; valorizzata solo se il consulente l'ha modificata. */
@@ -34,10 +37,12 @@ export interface DatiReportSistema {
 
 /**
  * Regole non validate (R3): una voce usata dall'esito che nelle regole correnti non è `validata`
- * (voce mancante inclusa). Senza regole ci si affida al conteggio salvato nell'esito.
+ * (voce mancante inclusa). Senza regole, o se la valutazione è di un'altra versione delle regole,
+ * ci si affida al conteggio salvato nell'esito.
  */
-function nonValidate(usate: string[], conteggio: number, regole: FileRegole | null): boolean {
-  if (!regole) return conteggio > 0;
+function nonValidate(valutazione: Valutazione, esito: EsitoValutazione, regole: FileRegole | null): boolean {
+  if (!regole || valutazione.versioneRegole !== regole.meta.versione) return esito.vociNonValidate > 0;
+  const usate = esito.vociUsate;
   const stati = new Map<string, string>();
   for (const v of [...regole.domande, ...regole.esiti, ...regole.trasparenza, ...regole.obblighi]) stati.set(v.id, v.stato);
   return usate.some((id) => stati.get(id) !== 'validata');
@@ -60,6 +65,7 @@ export function datiReportSistema(
     sistema,
     ruoloEtichetta: RUOLI[sistema.ruoloCliente],
     ruoloEffettivoEtichetta: RUOLI[esito.ruoloEffettivo],
+    ruoloDaDefinire: esito.ruoloEffettivo === 'da_definire',
     classe: valutazione.classeConfermata ?? esito.classe,
     classeCalcolata: modificata ? esito.classe : null,
     notaModifica: modificata ? valutazione.notaModifica : null,
@@ -72,7 +78,7 @@ export function datiReportSistema(
       riferimento: o.riferimento,
       dal: formattaData(o.dataApplicazione),
     })),
-    regoleNonValidate: nonValidate(esito.vociUsate, esito.vociNonValidate, regole),
+    regoleNonValidate: nonValidate(valutazione, esito, regole),
     confermatoIl: formattaData(conferma),
     versioneRegole: valutazione.versioneRegole,
     norma: regole?.meta.norma ?? '',
@@ -83,6 +89,7 @@ export function datiReportSistema(
  * Riga del foglio Inventario. I testi sono già pronti per la cella.
  * Date: `AAAA-MM-GG` del giorno di calendario locale (timestamp convertito nel fuso locale),
  * null se assenti; il generatore Excel le trasforma in `Date.UTC(y, m-1, d)` (R2).
+ * Classe: etichetta della classe del consulente; se modificata, con la classe calcolata a cui si riferiscono gli obblighi.
  * Classe, Trasparenza, Data conferma, Applicabile dal: valorizzati solo per le valutazioni confermate
  * (stringa vuota / null altrimenti); N. obblighi vale 0 se non confermata.
  */
@@ -120,6 +127,15 @@ export interface DatiInventario {
   obblighi: RigaObbligo[];
 }
 
+/**
+ * Cella Classe: le colonne sono fisse, quindi la classe modificata dal consulente dichiara
+ * a quale classe si riferiscono gli obblighi (quelli della classe calcolata).
+ */
+function etichettaClasse(confermata: Classe | null, calcolata: Classe): string {
+  if (confermata === null || confermata === calcolata) return ETICHETTE_CLASSE[calcolata];
+  return `${ETICHETTE_CLASSE[confermata]} (modificata; obblighi riferiti a: ${ETICHETTE_CLASSE[calcolata]})`;
+}
+
 /** `attive[i]` è la valutazione attiva di `sistemi[i]` (o null). */
 export function datiInventario(
   studio: ImpostazioniStudio,
@@ -140,7 +156,7 @@ export function datiInventario(
       scopo: s.scopo,
       reparto: s.reparto ?? '',
       ruoloCliente: RUOLI[s.ruoloCliente],
-      classe: confermata ? ETICHETTE_CLASSE[v.classeConfermata ?? esito.classe] : '',
+      classe: confermata ? etichettaClasse(v.classeConfermata, esito.classe) : '',
       trasparenza: confermata ? (esito.trasparenza ? 'Sì' : 'No') : '',
       stato: v ? ETICHETTE_STATO[v.stato] : 'Non avviata',
       dataConferma: confermata ? giornoLocale(v.confermatoIl ?? v.modificatoIl) : null,

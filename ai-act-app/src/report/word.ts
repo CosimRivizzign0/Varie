@@ -2,6 +2,7 @@ import {
   AlignmentType, BorderStyle, Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, WidthType,
 } from 'docx';
 import { formattaData } from '../domain/formatoData';
+import { AVVISO_CLASSE_MODIFICATA, AVVISO_RUOLO_DA_DEFINIRE } from '../domain/valutazione';
 import { ETICHETTE_CLASSE } from '../regole/tipi';
 import type { DatiReportSistema } from './dati';
 
@@ -105,7 +106,7 @@ export async function creaWord(d: DatiReportSistema): Promise<Uint8Array> {
 
   figli.push(titolo('Motivazione'));
   for (const m of d.motivazione) {
-    figli.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun(`${m.testo} — ${m.riferimento}`)] }));
+    figli.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun(m.riferimento.trim() ? `${m.testo} — ${m.riferimento}` : m.testo)] }));
   }
 
   if (d.aperte.length > 0) {
@@ -119,9 +120,9 @@ export async function creaWord(d: DatiReportSistema): Promise<Uint8Array> {
   } else {
     figli.push(paragrafo('Nessun obbligo applicabile per questa classificazione.'));
   }
-  if (d.classeCalcolata && d.notaModifica) {
-    figli.push(paragrafo(''), campo('Nota', d.notaModifica));
-  }
+  // Gli obblighi vengono dalla classe calcolata e, se il ruolo è da definire, da tutti i ruoli.
+  if (d.classeCalcolata) figli.push(paragrafo(AVVISO_CLASSE_MODIFICATA, { grassetto: true }));
+  if (d.ruoloDaDefinire) figli.push(paragrafo(AVVISO_RUOLO_DA_DEFINIRE, { grassetto: true }));
 
   figli.push(
     new Paragraph({
