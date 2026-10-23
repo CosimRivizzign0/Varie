@@ -51,6 +51,27 @@ export const MIGRAZIONI: Istruzione[][] = [
     },
     { sql: `CREATE INDEX ix_attivita_cliente_quando ON attivita(cliente_id, quando)` },
   ],
+  [
+    {
+      sql: `CREATE TABLE valutazioni (
+        id TEXT PRIMARY KEY NOT NULL,
+        sistema_id TEXT NOT NULL REFERENCES sistemi(id),
+        versione_regole TEXT NOT NULL,
+        risposte TEXT NOT NULL,
+        esito TEXT NULL,
+        stato TEXT NOT NULL CHECK (stato IN ('in_corso','completata','confermata')),
+        classe_confermata TEXT NULL,
+        nota_modifica TEXT NULL,
+        creato_il TEXT NOT NULL,
+        modificato_il TEXT NOT NULL,
+        confermato_il TEXT NULL,
+        sostituita_il TEXT NULL
+      )`,
+    },
+    {
+      sql: `CREATE UNIQUE INDEX ux_valutazioni_attiva ON valutazioni(sistema_id) WHERE sostituita_il IS NULL`,
+    },
+  ],
 ];
 
 export async function migra(driver: SqlDriver): Promise<number> {

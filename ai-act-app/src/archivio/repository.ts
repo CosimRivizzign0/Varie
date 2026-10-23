@@ -2,6 +2,9 @@ import { validaCliente } from '../domain/cliente';
 import { validaSistema } from '../domain/sistema';
 import { isScaduto } from '../domain/cestino';
 import type { Attivita, Cliente, SistemaAI, TipoAttivita } from '../domain/tipi';
+import type { Valutazione } from '../domain/valutazione';
+import type { EsitoValutazione } from '../regole/motore';
+import { ETICHETTE_CLASSE, type Classe, type Risposte } from '../regole/tipi';
 import type { Istruzione, Parametro, SqlDriver } from './driver';
 import {
   ErroreClienteNelCestino,
@@ -9,6 +12,7 @@ import {
   ErroreNonTrovato,
   ErrorePartitaIvaDuplicata,
   ErroreValidazione,
+  ErroreValutazioneIncompleta,
 } from './errori';
 
 export interface ElementoCestino {
@@ -37,6 +41,11 @@ export interface Repository {
   eliminaSistema(id: string): Promise<void>;
   ripristinaSistema(id: string): Promise<void>;
   confermaInventario(clienteId: string): Promise<void>;
+  getValutazioneAttiva(sistemaId: string): Promise<Valutazione | null>;
+  elencaValutazioni(sistemaId: string): Promise<Valutazione[]>;
+  avviaValutazione(sistemaId: string, versioneRegole: string): Promise<Valutazione>;
+  salvaRisposte(id: string, risposte: Risposte, esito: EsitoValutazione): Promise<Valutazione>;
+  confermaValutazione(id: string, classe: Classe, nota: string | null): Promise<Valutazione>;
 }
 
 export interface DipendenzeRepository {
@@ -77,6 +86,23 @@ export function rigaASistema(r: Riga): SistemaAI {
     creatoIl: r.creato_il as string,
     modificatoIl: r.modificato_il as string,
     eliminatoIl: r.eliminato_il as string | null,
+  };
+}
+
+function rigaAValutazione(r: Riga): Valutazione {
+  return {
+    id: r.id as string,
+    sistemaId: r.sistema_id as string,
+    versioneRegole: r.versione_regole as string,
+    risposte: JSON.parse(r.risposte as string) as Risposte,
+    esito: r.esito === null ? null : (JSON.parse(r.esito as string) as EsitoValutazione),
+    stato: r.stato as Valutazione['stato'],
+    classeConfermata: r.classe_confermata as Classe | null,
+    notaModifica: r.nota_modifica as string | null,
+    creatoIl: r.creato_il as string,
+    modificatoIl: r.modificato_il as string,
+    confermatoIl: r.confermato_il as string | null,
+    sostituitaIl: r.sostituita_il as string | null,
   };
 }
 
@@ -151,7 +177,27 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
     return c;
   }
 
+  async function leggiValutazione(id: string): Promise<Valutazione | null> {
+    const righe = await driver.select<Riga>('SELECT * FROM valutazioni WHERE id = ?', [id]);
+    return righe[0] ? rigaAValutazione(righe[0]) : null;
+  }
+
+  // Valutazione attiva (non sostituita) di un sistema non nel cestino, con il sistema.
+  async function valutazioneModificabile(id: string): Promise<{ v: Valutazione; s: SistemaAI }> {
+    const v = await leggiValutazione(id);
+    if (!v || v.sostituitaIl !== null) throw new ErroreNonTrovato('Valutazione non trovata');
+    const s = await leggiSistema(v.sistemaId);
+    if (!s || s.eliminatoIl !== null) throw new ErroreNonTrovato('Valutazione non trovata');
+    return { v, s };
+  }
+
+  const istruzioniCancellaValutazioniCliente = (id: string): Istruzione => ({
+    sql: 'DELETE FROM valutazioni WHERE sistema_id IN (SELECT id FROM sistemi WHERE cliente_id = ?)',
+    params: [id],
+  });
+
   const istruzioniCancellaCliente = (id: string): Istruzione[] => [
+    istruzioniCancellaValutazioniCliente(id),
     { sql: 'DELETE FROM attivita WHERE cliente_id = ?', params: [id] },
     { sql: 'DELETE FROM sistemi WHERE cliente_id = ?', params: [id] },
     { sql: 'DELETE FROM clienti WHERE id = ?', params: [id] },
@@ -295,7 +341,10 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
           [id],
         );
         if (righe.length === 0) throw new ErroreNonTrovato('Elemento non trovato nel cestino');
-        await driver.batch([{ sql: 'DELETE FROM sistemi WHERE id = ?', params: [id] }]);
+        await driver.batch([
+          { sql: 'DELETE FROM valutazioni WHERE sistema_id = ?', params: [id] },
+          { sql: 'DELETE FROM sistemi WHERE id = ?', params: [id] },
+        ]);
       }
     },
 
@@ -306,7 +355,10 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
       const sistemiScaduti = cestino.filter((e) => e.tipo === 'sistema' && isScaduto(e.eliminatoIl, adesso));
       const istruzioni: Istruzione[] = [];
       for (const c of clientiScaduti) istruzioni.push(...istruzioniCancellaCliente(c.id));
-      for (const s of sistemiScaduti) istruzioni.push({ sql: 'DELETE FROM sistemi WHERE id = ?', params: [s.id] });
+      for (const s of sistemiScaduti) {
+        istruzioni.push({ sql: 'DELETE FROM valutazioni WHERE sistema_id = ?', params: [s.id] });
+        istruzioni.push({ sql: 'DELETE FROM sistemi WHERE id = ?', params: [s.id] });
+      }
       const rimossi = clientiScaduti.length + sistemiScaduti.length;
       if (istruzioni.length > 0) await driver.batch(istruzioni);
       return rimossi;
@@ -398,6 +450,94 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
           t,
         ),
       ]);
+    },
+
+    async getValutazioneAttiva(sistemaId) {
+      const righe = await driver.select<Riga>(
+        'SELECT * FROM valutazioni WHERE sistema_id = ? AND sostituita_il IS NULL',
+        [sistemaId],
+      );
+      return righe[0] ? rigaAValutazione(righe[0]) : null;
+    },
+
+    async elencaValutazioni(sistemaId) {
+      const righe = await driver.select<Riga>(
+        'SELECT * FROM valutazioni WHERE sistema_id = ? ORDER BY creato_il DESC, rowid DESC',
+        [sistemaId],
+      );
+      return righe.map(rigaAValutazione);
+    },
+
+    async avviaValutazione(sistemaId, versioneRegole) {
+      const s = await sistemaAttivo(sistemaId);
+      const t = ora().toISOString();
+      const id = nuovoId();
+      await driver.batch([
+        {
+          sql: 'UPDATE valutazioni SET sostituita_il = ? WHERE sistema_id = ? AND sostituita_il IS NULL',
+          params: [t, sistemaId],
+        },
+        {
+          sql: `INSERT INTO valutazioni (id, sistema_id, versione_regole, risposte, esito, stato,
+                  classe_confermata, nota_modifica, creato_il, modificato_il, confermato_il, sostituita_il)
+                VALUES (?, ?, ?, '{}', NULL, 'in_corso', NULL, NULL, ?, ?, NULL, NULL)`,
+          params: [id, sistemaId, versioneRegole, t, t],
+        },
+        attivita(s.clienteId, 'modificato', `Valutazione di «${s.nome}» avviata`, t, sistemaId),
+      ]);
+      return (await leggiValutazione(id)) as Valutazione;
+    },
+
+    async salvaRisposte(id, risposte, esito) {
+      const { v, s } = await valutazioneModificabile(id);
+      const t = ora().toISOString();
+      const stato = esito.completo ? 'completata' : 'in_corso';
+      const istruzioni: Istruzione[] = [
+        {
+          sql: `UPDATE valutazioni SET risposte = ?, esito = ?, stato = ?, classe_confermata = NULL,
+                  nota_modifica = NULL, confermato_il = NULL, modificato_il = ?
+                WHERE id = ?`,
+          params: [JSON.stringify(risposte), JSON.stringify(esito), stato, t, id],
+        },
+      ];
+      if (v.stato === 'in_corso' && stato === 'completata') {
+        istruzioni.push(
+          attivita(
+            s.clienteId,
+            'modificato',
+            `Valutazione di «${s.nome}» completata: ${ETICHETTE_CLASSE[esito.classe]}`,
+            t,
+            s.id,
+          ),
+        );
+      }
+      await driver.batch(istruzioni);
+      return (await leggiValutazione(id)) as Valutazione;
+    },
+
+    async confermaValutazione(id, classe, nota) {
+      const { v, s } = await valutazioneModificabile(id);
+      if (v.stato === 'in_corso' || v.esito === null) throw new ErroreValutazioneIncompleta();
+      const notaPulita = nota?.trim() ? nota.trim() : null;
+      const uguale = classe === v.esito.classe;
+      if (!uguale && notaPulita === null) {
+        throw new ErroreValidazione({ nota: 'Indica il motivo della modifica' });
+      }
+      const t = ora().toISOString();
+      const etichetta = ETICHETTE_CLASSE[classe];
+      const descrizione = uguale
+        ? `Classificazione di «${s.nome}» confermata: ${etichetta}`
+        : `Classificazione di «${s.nome}» modificata: ${etichetta} — ${notaPulita}`;
+      await driver.batch([
+        {
+          sql: `UPDATE valutazioni SET stato = 'confermata', classe_confermata = ?, nota_modifica = ?,
+                  confermato_il = ?, modificato_il = ?
+                WHERE id = ?`,
+          params: [classe, notaPulita, t, t, id],
+        },
+        attivita(s.clienteId, 'modificato', descrizione, t, s.id),
+      ]);
+      return (await leggiValutazione(id)) as Valutazione;
     },
   };
 }

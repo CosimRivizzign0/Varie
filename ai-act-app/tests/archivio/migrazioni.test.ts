@@ -3,15 +3,15 @@ import { creaSqlJsDriver } from '../../src/archivio/sqljsDriver';
 import { MIGRAZIONI, migra } from '../../src/archivio/migrazioni';
 
 describe('migra', () => {
-  it('su db vuoto porta a versione 1, è idempotente e crea le tabelle', async () => {
+  it('su db vuoto porta a versione 2, è idempotente e crea le tabelle', async () => {
     const driver = await creaSqlJsDriver();
-    expect(await migra(driver)).toBe(1);
-    expect(await migra(driver)).toBe(1);
+    expect(await migra(driver)).toBe(2);
+    expect(await migra(driver)).toBe(2);
     const tabelle = await driver.select<{ name: string }>(
       "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
     );
     const nomi = tabelle.map((t) => t.name);
-    expect(nomi).toEqual(expect.arrayContaining(['clienti', 'sistemi', 'attivita']));
+    expect(nomi).toEqual(expect.arrayContaining(['clienti', 'sistemi', 'attivita', 'valutazioni']));
   });
 
   it('applica i vincoli: P.IVA unica tra attivi, ruolo e tipo validi, FK', async () => {
@@ -52,5 +52,34 @@ describe('migra con database di una versione più recente', () => {
     await expect(migra(driver)).rejects.toThrow(
       'Il backup proviene da una versione più recente dell\'app.',
     );
+  });
+});
+
+describe('migrazione 2', () => {
+  it('da un db alla versione 1 con dati Fase 1 mantiene i dati e crea valutazioni', async () => {
+    const driver = await creaSqlJsDriver();
+    await driver.batch([...MIGRAZIONI[0], { sql: 'PRAGMA user_version = 1' }]);
+    await driver.batch([
+      {
+        sql: `INSERT INTO clienti (id, ragione_sociale, partita_iva, settore, referente_nome,
+          creato_il, modificato_il) VALUES ('c', 'X', '00488410010', 'S', 'R', 'c', 'm')`,
+      },
+      {
+        sql: `INSERT INTO sistemi (id, cliente_id, nome, fornitore, scopo, ruolo_cliente,
+          creato_il, modificato_il) VALUES ('s', 'c', 'n', 'f', 'sc', 'deployer', 'c', 'm')`,
+      },
+    ]);
+    expect(await migra(driver)).toBe(2);
+    expect((await driver.select('SELECT id FROM clienti')).length).toBe(1);
+    expect((await driver.select('SELECT id FROM sistemi')).length).toBe(1);
+    const ins = (id: string, stato = 'in_corso', sost: string | null = null) => ({
+      sql: `INSERT INTO valutazioni (id, sistema_id, versione_regole, risposte, stato, creato_il, modificato_il, sostituita_il)
+        VALUES (?, 's', '1', '{}', ?, 'c', 'm', ?)`,
+      params: [id, stato, sost],
+    });
+    await driver.batch([ins('v1')]);
+    await expect(driver.batch([ins('v2')])).rejects.toThrow();
+    await driver.batch([ins('v3', 'in_corso', 'ieri')]);
+    await expect(driver.batch([ins('v4', 'boh', 'ieri')])).rejects.toThrow();
   });
 });

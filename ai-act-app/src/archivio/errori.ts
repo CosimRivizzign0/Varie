@@ -32,3 +32,10 @@ export class ErroreClienteNelCestino extends Error {
     this.name = 'ErroreClienteNelCestino';
   }
 }
+
+export class ErroreValutazioneIncompleta extends Error {
+  constructor() {
+    super('Completa il questionario prima di confermare');
+    this.name = 'ErroreValutazioneIncompleta';
+  }
+}
