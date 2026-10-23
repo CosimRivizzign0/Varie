@@ -62,19 +62,33 @@ function classifica(regole: FileRegole, R: Risposte): Classificazione {
   return { classe, vincente, trasparenza: regoleTrasparenza.length > 0, regoleTrasparenza };
 }
 
+/** Oltre questa soglia di `non_so` visibili non si enumera: sono considerate tutte aperte. */
+const MAX_NON_SO = 12;
+
+function ruoloDi(regole: FileRegole, R: Risposte, ruoloCliente: RuoloCliente): RuoloEffettivo | 'da_definire' {
+  return valuta(regole.ruoloFornitoreSe, R) ? 'fornitore' : ruoloCliente;
+}
+
 /**
- * Domande visibili con `non_so` che, forzate a `si` e poi a `no` (altre risposte invariate,
- * visibilità ricalcolata), portano a classe o trasparenza diverse.
+ * Domande visibili con `non_so` determinanti. Si enumerano tutte le 2^|N| assegnazioni si/no
+ * delle `non_so` visibili (visibilità ricalcolata per ciascuna; le domande senza risposta restano
+ * senza risposta). Una domanda è aperta se esistono due assegnazioni che differiscono solo per
+ * essa con esito (classe, trasparenza, ruolo effettivo) diverso.
  */
-function domandeAperte(regole: FileRegole, visibili: Domanda[], r: Risposte): string[] {
-  const aperte: string[] = [];
-  for (const d of visibili) {
-    if (r[d.id] !== 'non_so') continue;
-    const conSi = classifica(regole, risposteEffettive(regole, { ...r, [d.id]: 'si' }).R);
-    const conNo = classifica(regole, risposteEffettive(regole, { ...r, [d.id]: 'no' }).R);
-    if (conSi.classe !== conNo.classe || conSi.trasparenza !== conNo.trasparenza) aperte.push(d.id);
+function domandeAperte(
+  regole: FileRegole, visibili: Domanda[], r: Risposte, ruoloCliente: RuoloCliente,
+): string[] {
+  const nonSo = visibili.filter((d) => r[d.id] === 'non_so').map((d) => d.id);
+  if (nonSo.length > MAX_NON_SO) return nonSo;
+  const esiti: string[] = [];
+  for (let m = 0; m < 1 << nonSo.length; m++) {
+    const forzate: Risposte = { ...r };
+    nonSo.forEach((id, i) => { forzate[id] = m & (1 << i) ? 'si' : 'no'; });
+    const { R } = risposteEffettive(regole, forzate);
+    const c = classifica(regole, R);
+    esiti.push(`${c.classe}|${c.trasparenza}|${ruoloDi(regole, R, ruoloCliente)}`);
   }
-  return aperte;
+  return nonSo.filter((_, i) => esiti.some((e, m) => !(m & (1 << i)) && e !== esiti[m | (1 << i)]));
 }
 
 export function calcolaEsito(regole: FileRegole, r: Risposte, ruoloCliente: RuoloCliente): EsitoValutazione {
@@ -82,15 +96,13 @@ export function calcolaEsito(regole: FileRegole, r: Risposte, ruoloCliente: Ruol
   const completo = visibili.every((d) => R[d.id] !== undefined);
 
   const base = classifica(regole, R);
-  const aperte = domandeAperte(regole, visibili, r);
+  const aperte = domandeAperte(regole, visibili, r, ruoloCliente);
   const classe: Classe = aperte.length > 0 ? 'da_approfondire' : base.classe;
   // Con classe da_approfondire nessuna regola esito "vince": la classe non è determinata.
   const vincente = classe === 'da_approfondire' ? null : base.vincente;
   const { trasparenza, regoleTrasparenza } = base;
 
-  const ruoloEffettivo: RuoloEffettivo | 'da_definire' = valuta(regole.ruoloFornitoreSe, R)
-    ? 'fornitore'
-    : ruoloCliente;
+  const ruoloEffettivo = ruoloDi(regole, R, ruoloCliente);
 
   const obblighiApplicati = regole.obblighi
     .filter((o) =>
@@ -98,10 +110,7 @@ export function calcolaEsito(regole: FileRegole, r: Risposte, ruoloCliente: Ruol
       (!o.soloSeTrasparenza || trasparenza) &&
       (o.quando === null || valuta(o.quando, R)) &&
       (ruoloEffettivo === 'da_definire' || o.ruoli.includes(ruoloEffettivo)))
-    .sort((a, b) =>
-      a.dataApplicazione < b.dataApplicazione ? -1
-        : a.dataApplicazione > b.dataApplicazione ? 1
-          : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    .sort((a, b) => a.dataApplicazione.localeCompare(b.dataApplicazione) || a.id.localeCompare(b.id));
 
   const motivazione = [
     ...(vincente ? [vincente] : []),

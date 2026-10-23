@@ -128,6 +128,49 @@ describe('calcolaEsito', () => {
     expect(e.aperte).toEqual([]);
   });
 
+  it('due non_so determinanti solo insieme => da_approfondire, entrambi aperti', () => {
+    const f: FileRegole = {
+      ...fixture(),
+      ruoloFornitoreSe: { tutte: [si('a'), no('a')] }, // mai vera
+      domande: [d('a', 'alto_rischio'), d('b', 'alto_rischio')],
+      esiti: [{
+        id: 'e_ab', quando: { tutte: [si('a'), si('b')] }, classe: 'alto_rischio', motivazione: 'ab',
+        riferimento: 'art. 6', dataApplicazione: '2027-12-02', stato: 'validata',
+      }],
+      trasparenza: [],
+    };
+    const e = calcolaEsito(f, { a: 'non_so', b: 'non_so' }, 'deployer');
+    expect(e.classe).toBe('da_approfondire');
+    expect(e.aperte).toEqual(['a', 'b']);
+  });
+
+  it('oltre 12 non_so visibili: tutte aperte senza enumerare', () => {
+    const extra = Array.from({ length: 13 }, (_, i) => d(`x${i}`, 'ambito'));
+    const f: FileRegole = { ...fixture(), domande: [...fixture().domande, ...extra] };
+    const r = Object.fromEntries(extra.map((q) => [q.id, 'non_so' as const]));
+    const e = calcolaEsito(f, r, 'deployer');
+    expect(e.classe).toBe('da_approfondire');
+    expect(e.aperte).toEqual(extra.map((q) => q.id));
+  });
+
+  it('non_so su domanda nascosta non apre nulla', () => {
+    const e = calcolaEsito(fixture(), { q_area: 'no', q_deroga: 'non_so' }, 'deployer');
+    expect(e.aperte).toEqual([]);
+    expect(e.classe).toBe('minimo');
+  });
+
+  it('due non_so di cui uno solo determinante', () => {
+    const e = calcolaEsito(fixture(), { q_vietata: 'si', q_ambito: 'non_so', q_chatbot: 'non_so' }, 'deployer');
+    expect(e.classe).toBe('da_approfondire');
+    expect(e.aperte).toEqual(['q_ambito']);
+  });
+
+  it('non_so che cambia il ruolo effettivo => aperto', () => {
+    const e = calcolaEsito(fixture(), { q_area: 'si', q_deroga: 'no', q_marchio: 'non_so' }, 'deployer');
+    expect(e.aperte).toEqual(['q_marchio']);
+    expect(e.classe).toBe('da_approfondire');
+  });
+
   it('marchio proprio => ruolo fornitore e solo i suoi obblighi', () => {
     const e = calcolaEsito(fixture(), { q_area: 'si', q_deroga: 'no', q_marchio: 'si' }, 'deployer');
     expect(e.classe).toBe('alto_rischio');
