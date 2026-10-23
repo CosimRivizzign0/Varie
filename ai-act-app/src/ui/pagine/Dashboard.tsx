@@ -122,6 +122,7 @@ export function Dashboard() {
         <h1>Clienti</h1>
         <Link className="pulsante pulsante-primario" to="/clienti/nuovo">Nuovo cliente</Link>
         <Link className="pulsante" to="/cestino">Cestino</Link>
+        <Link className="pulsante" to="/impostazioni">Impostazioni</Link>
         {ambienteTauri() && <MenuBackup />}
       </div>
       <div className="filtri">

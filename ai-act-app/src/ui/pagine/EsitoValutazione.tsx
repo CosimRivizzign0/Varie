@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ErroreValidazione } from '../../archivio/errori';
+import { salvaConNome } from '../../archivio/salvaFile';
+import { datiReportSistema } from '../../report/dati';
+import { nomeFileWord } from '../../report/nomiFile';
 import type { SistemaAI } from '../../domain/tipi';
 import type { Valutazione } from '../../domain/valutazione';
 import { ERRORE_REGOLE, REGOLE } from '../../regole/attive';
@@ -28,6 +31,7 @@ function Contenuto({ id }: { id: string }) {
   const [errNota, setErrNota] = useState<string | undefined>();
   const [inCorso, setInCorso] = useState(false);
   const bloccato = useRef(false);
+  const [esportato, setEsportato] = useState<string | null>(null);
 
   useEffect(() => {
     let attivo = true;
@@ -95,6 +99,7 @@ function Contenuto({ id }: { id: string }) {
     setInCorso(true);
     setErrore(null);
     setErrNota(undefined);
+    setEsportato(null);
     try {
       await repo.confermaValutazione(valutazioneId, classeScelta, notaScelta);
       const v = await repo.getValutazioneAttiva(id);
@@ -109,6 +114,33 @@ function Contenuto({ id }: { id: string }) {
       } else {
         setErrore((err as Error).message);
       }
+    } finally {
+      bloccato.current = false;
+      setInCorso(false);
+    }
+  }
+
+  /** Word del singolo sistema con "Salva con nome"; registrato solo se il file è stato scritto. */
+  async function esportaWord() {
+    if (bloccato.current || !sistema || !valutazione) return;
+    bloccato.current = true;
+    setInCorso(true);
+    setErrore(null);
+    setEsportato(null);
+    try {
+      const cliente = await repo.getCliente(sistema.clienteId);
+      if (!cliente) throw new Error('Cliente non trovato');
+      const studio = await repo.getImpostazioniStudio();
+      // Import dinamico: docx resta fuori dal bundle iniziale.
+      const { creaWord } = await import('../../report/word');
+      const nome = nomeFileWord(cliente, sistema, new Date());
+      const byte = await creaWord(datiReportSistema(studio, cliente, sistema, valutazione, REGOLE));
+      const percorso = await salvaConNome(nome, byte);
+      if (percorso === null) return;
+      await repo.registraReport({ clienteId: cliente.id, sistemaId: sistema.id, valutazioneId: valutazione.id, tipo: 'word', nomeFile: nome });
+      setEsportato(percorso);
+    } catch (err) {
+      setErrore((err as Error).message);
     } finally {
       bloccato.current = false;
       setInCorso(false);
@@ -201,6 +233,11 @@ function Contenuto({ id }: { id: string }) {
               Conferma classificazione
             </button>
           )}
+          {confermata && (
+            <button type="button" className="pulsante pulsante-primario" disabled={inCorso} onClick={() => void esportaWord()}>
+              Esporta Word
+            </button>
+          )}
           <button
             type="button"
             className="pulsante"
@@ -214,6 +251,8 @@ function Contenuto({ id }: { id: string }) {
           </button>
         </div>
       )}
+
+      {esportato && <p className="esito-salvataggio" role="status">File creato: {esportato}</p>}
 
       {modifica && (
         <form

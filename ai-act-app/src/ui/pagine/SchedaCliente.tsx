@@ -7,6 +7,9 @@ import { sintesiPerRoadmap, type SintesiValutazione } from '../../domain/valutaz
 import { REGOLE } from '../../regole/attive';
 import { RUOLI, type Attivita, type Cliente, type SistemaAI } from '../../domain/tipi';
 import { ErroreValidazione } from '../../archivio/errori';
+import { salvaInCartella, scegliCartella } from '../../archivio/salvaFile';
+import { datiInventario, datiReportSistema } from '../../report/dati';
+import { nomeFileExcel, nomeFileWord } from '../../report/nomiFile';
 import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
 import { RoadmapBar } from '../componenti/RoadmapBar';
@@ -54,6 +57,12 @@ function formattaQuando(iso: string): string {
   return `${due(d.getDate())}/${due(d.getMonth() + 1)}/${d.getFullYear()} ${due(d.getHours())}:${due(d.getMinutes())}`;
 }
 
+/** Esito di "Genera report": file scritti e sistemi saltati perché senza valutazione confermata. */
+interface EsitoGenerazione {
+  creati: string[];
+  esclusi: string[];
+}
+
 export function SchedaCliente() {
   const { id } = useParams();
   return <Contenuto key={id ?? 'nuovo'} id={id} />;
@@ -74,6 +83,9 @@ function Contenuto({ id }: { id: string | undefined }) {
   const [salvataggio, setSalvataggio] = useState(false);
   const inCorso = useRef(false);
   const [avviso, setAvviso] = useState<string | null>(null);
+  const [generazione, setGenerazione] = useState(false);
+  const generazioneInCorso = useRef(false);
+  const [generati, setGenerati] = useState<EsitoGenerazione | null>(null);
 
   /** Rilegge cliente, sistemi e log; `aggiornaModulo: false` lascia intatti i valori del modulo. */
   const ricarica = useCallback(async ({ aggiornaModulo = true }: { aggiornaModulo?: boolean } = {}) => {
@@ -146,16 +158,71 @@ function Contenuto({ id }: { id: string | undefined }) {
     }
   }
 
+  // Modifiche non ancora salvate nel modulo: non vanno perse ricaricando.
+  const moduloModificato = () => cliente !== null && JSON.stringify(valori) !== JSON.stringify(daCliente(cliente));
+
   async function confermaInventario() {
     if (!id) return;
     setAvviso(null);
     try {
       await repo.confermaInventario(id);
-      // Modifiche non ancora salvate nel modulo: non vanno perse.
-      const modificato = cliente !== null && JSON.stringify(valori) !== JSON.stringify(daCliente(cliente));
-      await ricarica({ aggiornaModulo: !modificato });
+      await ricarica({ aggiornaModulo: !moduloModificato() });
     } catch (err) {
       setAvviso((err as Error).message);
+    }
+  }
+
+  /**
+   * Un Word per ogni sistema con valutazione confermata, poi l'Excel del cliente (anche senza sistemi confermati).
+   * Ogni file scritto è registrato subito: dopo un errore quelli già scritti restano nel registro.
+   */
+  async function generaReport() {
+    if (!cliente || generazioneInCorso.current) return;
+    generazioneInCorso.current = true;
+    setGenerazione(true);
+    setAvviso(null);
+    setGenerati(null);
+    const esito: EsitoGenerazione = { creati: [], esclusi: [] };
+    let avviata = false;
+    try {
+      const cartella = await scegliCartella();
+      if (cartella === null) return;
+      avviata = true;
+      // Import dinamici: docx ed exceljs restano fuori dal bundle iniziale.
+      const [{ creaWord }, { creaExcel }] = await Promise.all([import('../../report/word'), import('../../report/excel')]);
+      const studio = await repo.getImpostazioniStudio();
+      const elenco = await repo.elencaSistemi(cliente.id);
+      const attive = await Promise.all(elenco.map((s) => repo.getValutazioneAttiva(s.id)));
+      const oggi = new Date();
+      for (const [i, s] of elenco.entries()) {
+        const v = attive[i];
+        if (!v || v.stato !== 'confermata' || !v.esito) {
+          esito.esclusi.push(s.nome);
+          continue;
+        }
+        const nome = nomeFileWord(cliente, s, oggi);
+        await salvaInCartella(cartella, nome, await creaWord(datiReportSistema(studio, cliente, s, v, REGOLE)));
+        await repo.registraReport({ clienteId: cliente.id, sistemaId: s.id, valutazioneId: v.id, tipo: 'word', nomeFile: nome });
+        esito.creati.push(nome);
+      }
+      const nome = nomeFileExcel(cliente, oggi);
+      const inventario = datiInventario(studio, cliente, elenco, attive, REGOLE?.meta.versione ?? '');
+      await salvaInCartella(cartella, nome, await creaExcel(inventario));
+      await repo.registraReport({ clienteId: cliente.id, sistemaId: null, valutazioneId: null, tipo: 'excel', nomeFile: nome });
+      esito.creati.push(nome);
+    } catch (err) {
+      setAvviso((err as Error).message);
+    } finally {
+      if (avviata) {
+        setGenerati(esito);
+        try {
+          await ricarica({ aggiornaModulo: !moduloModificato() });
+        } catch (err) {
+          setAvviso((err as Error).message);
+        }
+      }
+      generazioneInCorso.current = false;
+      setGenerazione(false);
     }
   }
 
@@ -233,8 +300,36 @@ function Contenuto({ id }: { id: string | undefined }) {
           <div className="barra-azioni">
             <Link className="pulsante" to={`/clienti/${cliente.id}/sistemi/nuovo`}>Aggiungi sistema AI</Link>
             <button type="button" className="pulsante" onClick={confermaInventario}>Conferma inventario</button>
+            <button type="button" className="pulsante" disabled={generazione} onClick={generaReport}>Genera report</button>
             <button type="button" className="pulsante pulsante-pericolo" onClick={spostaNelCestino}>Sposta nel cestino</button>
           </div>
+
+          {generati && (
+            <div className="esito-report" role="status">
+              <p>File creati:</p>
+              <ul>
+                {generati.creati.map((n, i) => <li key={i}>{n}</li>)}
+              </ul>
+              {generati.esclusi.length > 0 && (
+                <ul>
+                  {generati.esclusi.map((n, i) => (
+                    <li key={i}>«{n}»: Non incluso: classificazione non confermata</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <h2 id="titolo-report">Report generati</h2>
+          {report.length === 0 ? (
+            <p className="vuoto">Nessun report generato.</p>
+          ) : (
+            <ul className="log" aria-labelledby="titolo-report">
+              {report.map((r) => (
+                <li key={r.id}>{formattaQuando(r.creatoIl)} — {r.nomeFile}</li>
+              ))}
+            </ul>
+          )}
 
           <h2>Log attività</h2>
           <ul className="log">

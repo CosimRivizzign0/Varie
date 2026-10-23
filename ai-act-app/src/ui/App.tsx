@@ -5,6 +5,7 @@ import { SchedaSistema } from './pagine/SchedaSistema';
 import { Questionario } from './pagine/Questionario';
 import { EsitoValutazione } from './pagine/EsitoValutazione';
 import { Cestino } from './pagine/Cestino';
+import { Impostazioni } from './pagine/Impostazioni';
 import './stile.css';
 
 interface Props {
@@ -40,6 +41,7 @@ export default function App({ erroreBackup = null, ripristinato = false }: Props
           <Route path="/sistemi/:id/valutazione" element={<Questionario />} />
           <Route path="/sistemi/:id/valutazione/esito" element={<EsitoValutazione />} />
           <Route path="/cestino" element={<Cestino />} />
+          <Route path="/impostazioni" element={<Impostazioni />} />
         </Routes>
       </main>
     </HashRouter>
