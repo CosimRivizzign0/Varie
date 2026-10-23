@@ -126,8 +126,8 @@ Migrazione 2, tabella `valutazioni`:
 - Una sola valutazione **attiva** per sistema (`sostituita_il IS NULL`); le precedenti
   restano come storico.
 - **Da rivedere**: valutazione attiva con `versione_regole` ≠ versione corrente.
-- Modificare una risposta di una valutazione `completata`/`confermata` la riporta
-  `in_corso` (esito ricalcolato, conferma azzerata).
+- Modificare una risposta di una valutazione `completata`/`confermata` ricalcola l'esito e
+  azzera la conferma: torna `completata` se il questionario resta completo, altrimenti `in_corso`.
 - Cestino: eliminare un sistema sposta con lui le sue valutazioni (come Fase 1).
 - Ogni scrittura in un unico batch con riga `attivita`.
 
