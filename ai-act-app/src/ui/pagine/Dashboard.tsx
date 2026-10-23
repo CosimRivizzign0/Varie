@@ -1,0 +1,174 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { ambienteTauri, esportaBackup, ricarica, ripristinaBackup } from '../../archivio/avvio';
+import type { Cliente } from '../../domain/tipi';
+import { calcolaRoadmap, type Roadmap } from '../../domain/roadmap';
+import { sintesiPerRoadmap } from '../../domain/valutazione';
+import { REGOLE } from '../../regole/attive';
+import { normalizzaPartitaIva } from '../../domain/partitaIva';
+import { useRepository } from '../RepositoryContext';
+import { RoadmapBar } from '../componenti/RoadmapBar';
+import { conferma } from '../conferma';
+import { segnaRipristino } from '../../archivio/sessione';
+
+interface Riga {
+  cliente: Cliente;
+  roadmap: Roadmap;
+}
+
+const TAPPE = ['Anagrafica', 'Inventario', 'Questionario', 'Classificazione', 'Report'] as const;
+
+const FILTRO_DB = [{ name: 'Database', extensions: ['db'] }];
+
+function messaggioDi(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+/** Esporta/Ripristina backup: solo nell'app desktop. */
+function MenuBackup() {
+  const [inCorso, setInCorso] = useState(false);
+  const [esito, setEsito] = useState<string | null>(null);
+  const [errore, setErrore] = useState<string | null>(null);
+
+  async function esegui(azione: () => Promise<void>) {
+    if (inCorso) return;
+    setInCorso(true);
+    setEsito(null);
+    setErrore(null);
+    try {
+      await azione();
+    } catch (e) {
+      setErrore(messaggioDi(e));
+    } finally {
+      setInCorso(false);
+    }
+  }
+
+  const esporta = () =>
+    esegui(async () => {
+      const dest = await save({ defaultPath: 'ai-act-backup.db', filters: FILTRO_DB });
+      if (!dest) return;
+      await esportaBackup(dest);
+      setEsito('Backup esportato.');
+    });
+
+  const ripristina = () =>
+    esegui(async () => {
+      const sorgente = await open({ multiple: false, directory: false, filters: FILTRO_DB });
+      if (!sorgente) return;
+      if (!(await conferma('Ripristinare il backup? I dati attuali verranno salvati in un backup prima della sostituzione.'))) return;
+      await ripristinaBackup(sorgente);
+      segnaRipristino();
+      ricarica();
+    });
+
+  return (
+    <>
+      <button type="button" className="pulsante" disabled={inCorso} onClick={esporta}>Esporta backup</button>
+      <button type="button" className="pulsante" disabled={inCorso} onClick={ripristina}>Ripristina backup</button>
+      {esito && <p className="esito-backup" role="status">{esito}</p>}
+      {errore && <p className="avviso esito-backup" role="alert">{errore}</p>}
+    </>
+  );
+}
+
+export function Dashboard() {
+  const repo = useRepository();
+  const [righe, setRighe] = useState<Riga[] | null>(null);
+  const [ricerca, setRicerca] = useState('');
+  const [tappa, setTappa] = useState('');
+  const [erroreCaricamento, setErroreCaricamento] = useState<string | null>(null);
+
+  useEffect(() => {
+    let attivo = true;
+    (async () => {
+      try {
+        const clienti = await repo.elencaClienti();
+        const oggi = new Date();
+        const caricate = await Promise.all(
+          clienti.map(async (cliente) => {
+            const sistemi = await repo.elencaSistemi(cliente.id);
+            const attive = await Promise.all(sistemi.map((s) => repo.getValutazioneAttiva(s.id)));
+            const report = await repo.elencaReport(cliente.id);
+            const sintesi = sintesiPerRoadmap(sistemi, attive, REGOLE?.meta.versione ?? '');
+            return { cliente, roadmap: calcolaRoadmap(cliente, sistemi, oggi, REGOLE ? sintesi : sintesi.map((x) => ({ ...x, daRivedere: false })), report) };
+          }),
+        );
+        if (attivo) setRighe(caricate);
+      } catch (e) {
+        if (attivo) setErroreCaricamento(messaggioDi(e));
+      }
+    })();
+    return () => {
+      attivo = false;
+    };
+  }, [repo]);
+
+  const q = ricerca.trim().toLowerCase();
+  const qPiva = normalizzaPartitaIva(ricerca.trim());
+  const visibili = (righe ?? []).filter(({ cliente, roadmap }) => {
+    const okRicerca =
+      q === '' ||
+      cliente.ragioneSociale.toLowerCase().includes(q) ||
+      (qPiva !== '' && cliente.partitaIva.includes(qPiva));
+    const okTappa = tappa === '' || roadmap.tappe.some((t) => t.stato === 'in_corso' && t.etichetta === tappa);
+    return okRicerca && okTappa;
+  });
+
+  return (
+    <section>
+      <div className="barra-azioni">
+        <h1>Clienti</h1>
+        <Link className="pulsante pulsante-primario" to="/clienti/nuovo">Nuovo cliente</Link>
+        <Link className="pulsante" to="/cestino">Cestino</Link>
+        <Link className="pulsante" to="/impostazioni">Impostazioni</Link>
+        {ambienteTauri() && <MenuBackup />}
+      </div>
+      <div className="filtri">
+        <input
+          type="search"
+          aria-label="Cerca"
+          placeholder="Cerca per ragione sociale o P.IVA"
+          value={ricerca}
+          onChange={(e) => setRicerca(e.target.value)}
+        />
+        <label>
+          Filtra per tappa{' '}
+          <select value={tappa} onChange={(e) => setTappa(e.target.value)}>
+            <option value="">Tutte</option>
+            {TAPPE.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {erroreCaricamento ? (
+        <div role="alert" className="avviso">{erroreCaricamento}</div>
+      ) : righe === null ? (
+        <p>Caricamento…</p>
+      ) : righe.length === 0 ? (
+        <p className="vuoto">Nessun cliente. Inizia con «Nuovo cliente».</p>
+      ) : visibili.length === 0 ? (
+        <p className="vuoto">Nessun cliente corrisponde ai filtri.</p>
+      ) : (
+        <ul className="elenco-clienti">
+          {visibili.map(({ cliente, roadmap }) => (
+            <li key={cliente.id} className="riga-cliente">
+              <div className="riga-testa">
+                <Link to={`/clienti/${cliente.id}`} className="nome-cliente">{cliente.ragioneSociale}</Link>
+                {cliente.aiLiteracyDocumentata ? (
+                  <span className="badge badge-ok">AI literacy ✓</span>
+                ) : (
+                  <span className="badge badge-attenzione">AI literacy da documentare</span>
+                )}
+              </div>
+              <RoadmapBar roadmap={roadmap} variante="compatta" />
+              <p className="prossima-azione">{roadmap.prossimaAzione}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
