@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { Valutazione } from '../../domain/valutazione';
+import { ETICHETTE_STATO as STATI, type Valutazione } from '../../domain/valutazione';
 import { ERRORE_REGOLE, REGOLE } from '../../regole/attive';
 import { ETICHETTE_CLASSE } from '../../regole/tipi';
 import { useRepository } from '../RepositoryContext';
 import { conferma } from '../conferma';
-
-const STATI = { in_corso: 'In corso', completata: 'Completata', confermata: 'Confermata' } as const;
 
 export function RiquadroValutazione({ sistemaId }: { sistemaId: string }) {
   const repo = useRepository();

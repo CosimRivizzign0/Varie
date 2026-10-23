@@ -4,6 +4,12 @@ import type { Classe, Risposte } from '../regole/tipi';
 
 export type StatoValutazione = 'in_corso' | 'completata' | 'confermata';
 
+export const ETICHETTE_STATO: Record<StatoValutazione, string> = {
+  in_corso: 'In corso',
+  completata: 'Completata',
+  confermata: 'Confermata',
+};
+
 export interface Valutazione {
   id: string;
   sistemaId: string;
