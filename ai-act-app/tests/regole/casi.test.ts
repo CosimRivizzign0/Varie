@@ -179,9 +179,52 @@ describe('casi di prova sulle regole v1.0.0 (spec §8)', () => {
     expect(e.ruoloEffettivo).toBe('fornitore');
     expect(e.dataApplicazioneClasse).toBe('2028-08-02');
     expect(e.motivazione.map((m) => m.riferimento)).toEqual(['Art. 6(1), All. I']);
-    expect(idObblighi(e)).toEqual(expect.arrayContaining(OBBLIGHI_FORNITORE_ALTO_RISCHIO));
+    expect(idObblighi(e)).toEqual(expect.arrayContaining(OBBLIGHI_FORNITORE_ALTO_RISCHIO.map((id) => `${id}_all1`)));
+    expect(idObblighi(e)).not.toContain('ob_art9_gestione_rischi');
     // La registrazione nella banca dati UE (art. 49(1)) riguarda i sistemi dell'Allegato III.
     expect(idObblighi(e)).not.toContain('ob_art49_registrazione');
+    // Tutti gli obblighi di alto rischio si applicano dal 02/08/2028.
+    for (const o of e.obblighi.filter((x) => x.id !== 'ob_art4_alfabetizzazione')) {
+      expect(o.dataApplicazione, o.id).toBe('2028-08-02');
+    }
+  });
+});
+
+describe('date e ambito: casi aggiuntivi', () => {
+  it('Allegato I + Allegato III senza deroga → alto rischio e obblighi dal 02/12/2027', () => {
+    const e = esito({ ar1_componente_sicurezza: 'si', ar3_infrastrutture_critiche: 'si' }, 'fornitore');
+    expect(e.classe).toBe('alto_rischio');
+    expect(e.dataApplicazioneClasse).toBe('2027-12-02');
+    expect(e.motivazione.map((m) => m.riferimento)).toEqual(['Art. 6(2), All. III']);
+    expect(idObblighi(e)).toEqual(expect.arrayContaining([...OBBLIGHI_FORNITORE_ALTO_RISCHIO, 'ob_art49_registrazione']));
+    expect(idObblighi(e).some((id) => id.endsWith('_all1'))).toBe(false);
+    for (const o of e.obblighi.filter((x) => x.id !== 'ob_art4_alfabetizzazione')) {
+      expect(o.dataApplicazione, o.id).toBe('2027-12-02');
+    }
+  });
+
+  it('Allegato I + Allegato III in deroga → alto rischio per l\'Allegato I, dal 02/08/2028, senza obblighi solo Allegato III', () => {
+    const e = esito({
+      ar1_componente_sicurezza: 'si', ar3_occupazione: 'si', der_compito_preparatorio: 'si', der_profilazione: 'no',
+    }, 'deployer');
+    expect(e.classe).toBe('alto_rischio');
+    expect(e.dataApplicazioneClasse).toBe('2028-08-02');
+    expect(idObblighi(e)).toEqual(expect.arrayContaining(['ob_art26_deployer_all1', 'ob_art26_7_lavoratori_all1']));
+    expect(idObblighi(e)).not.toContain('ob_art86_spiegazione');
+    expect(idObblighi(e)).not.toContain('ob_art27_fria');
+  });
+
+  it('impresa che offre ai consumatori un generatore di immagini → non esclusa: minimo + trasparenza', () => {
+    const e = esito({ amb_esclusione: 'no', tra_contenuti_sintetici: 'si' }, 'fornitore');
+    expect(e.classe).toBe('minimo');
+    expect(e.trasparenza).toBe(true);
+    expect(idObblighi(e)).toEqual(['ob_art4_alfabetizzazione', 'ob_art50_2_marcatura']);
+  });
+
+  it("la domanda sulle esclusioni limita l'art. 2(10) al cliente persona fisica e non esclude chi offre ai consumatori", () => {
+    const d = REGOLE!.domande.find((x) => x.id === 'amb_esclusione')!;
+    expect(d.testo).toContain('il cliente è una persona fisica');
+    expect(d.aiuto).toContain('NON è escluso');
   });
 });
 
