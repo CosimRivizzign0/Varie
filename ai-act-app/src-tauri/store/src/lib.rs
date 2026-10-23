@@ -10,6 +10,8 @@ use serde_json::{Map, Value};
 
 pub type Result<T> = std::result::Result<T, String>;
 
+pub const NON_DISPONIBILE: &str = "Database non disponibile: riavviare l'app";
+
 /// Numero di backup `ai-act-*.db` conservati nella cartella dei backup.
 pub const BACKUP_CONSERVATI: usize = 10;
 
@@ -22,7 +24,13 @@ pub struct Istruzione {
 
 pub struct Store {
     percorso: PathBuf,
-    connessione: Mutex<Connection>,
+    /// `None` solo se la riapertura dopo un ripristino è fallita: ogni operazione
+    /// restituisce allora [`NON_DISPONIBILE`] invece di lavorare su un database vuoto.
+    connessione: Mutex<Option<Connection>>,
+}
+
+fn attiva(conn: &mut Option<Connection>) -> Result<&mut Connection> {
+    conn.as_mut().ok_or_else(|| NON_DISPONIBILE.to_string())
 }
 
 fn errore(e: impl std::fmt::Display) -> String {
@@ -145,19 +153,26 @@ impl Store {
     pub fn apri(percorso: &Path) -> Result<Store> {
         Ok(Store {
             percorso: percorso.to_path_buf(),
-            connessione: Mutex::new(apri_connessione(percorso)?),
+            connessione: Mutex::new(Some(apri_connessione(percorso)?)),
         })
     }
 
-    fn conn(&self) -> Result<MutexGuard<'_, Connection>> {
+    #[cfg(test)]
+    fn simula_connessione_persa(&self) {
+        *self.connessione.lock().unwrap() = None;
+    }
+
+    fn guardia(&self) -> Result<MutexGuard<'_, Option<Connection>>> {
         self.connessione
             .lock()
-            .map_err(|_| "Connessione al database non disponibile".to_string())
+            .map_err(|_| NON_DISPONIBILE.to_string())
     }
+
 
     pub fn select(&self, sql: &str, params: &[Value]) -> Result<Vec<Map<String, Value>>> {
         let valori = in_parametri(params)?;
-        let conn = self.conn()?;
+        let mut guardia = self.guardia()?;
+        let conn = attiva(&mut guardia)?;
         let mut stmt = conn.prepare(sql).map_err(errore)?;
         let colonne: Vec<String> = stmt.column_names().iter().map(|c| c.to_string()).collect();
         let mut righe = stmt.query(params_from_iter(valori.iter())).map_err(errore)?;
@@ -178,7 +193,8 @@ impl Store {
             .iter()
             .map(|i| in_parametri(&i.params))
             .collect::<Result<_>>()?;
-        let mut conn = self.conn()?;
+        let mut guardia = self.guardia()?;
+        let conn = attiva(&mut guardia)?;
         // Il drop senza commit esegue il rollback.
         let tx = conn.transaction().map_err(errore)?;
         for (istruzione, params) in istruzioni.iter().zip(&valori) {
@@ -191,47 +207,60 @@ impl Store {
 
     /// Copia coerente del database in `dest` (`VACUUM INTO`).
     pub fn backup_in(&self, dest: &Path) -> Result<()> {
-        let conn = self.conn()?;
-        vacuum_in(&conn, &self.percorso, dest)
+        let mut guardia = self.guardia()?;
+        vacuum_in(attiva(&mut guardia)?, &self.percorso, dest)
     }
 
     /// Crea `ai-act-<ora>.db` in `dir` e conserva solo i 10 backup più recenti per nome.
     pub fn backup_avvio(&self, dir: &Path, ora: &str) -> Result<PathBuf> {
-        let conn = self.conn()?;
-        backup_ruotato(&conn, &self.percorso, dir, ora)
+        let mut guardia = self.guardia()?;
+        backup_ruotato(attiva(&mut guardia)?, &self.percorso, dir, ora)
     }
 
     /// Sostituisce il database con `sorgente` dopo averne verificato l'integrità e
     /// aver salvato un backup del database corrente in `dir_backup`.
     pub fn ripristina(&self, sorgente: &Path, dir_backup: &Path) -> Result<()> {
-        verifica_integrita(sorgente)?;
-        let mut conn = self.conn()?;
-        let ora: String = conn
-            .query_row("SELECT strftime('%Y%m%d-%H%M%S', 'now', 'localtime')", [], |r| r.get(0))
-            .map_err(errore)?;
-        backup_ruotato(&conn, &self.percorso, dir_backup, &ora)?;
-
         let nome = self
             .percorso
             .file_name()
             .ok_or_else(|| "Percorso del database non valido".to_string())?
             .to_string_lossy();
         let tmp = self.percorso.with_file_name(format!(".{nome}.ripristino"));
-        std::fs::copy(sorgente, &tmp).map_err(errore)?;
+        // Prima si copia e verifica la sorgente: la rotazione del backup qui sotto
+        // potrebbe eliminarla, se è il backup più vecchio della cartella.
+        let copia = std::fs::copy(sorgente, &tmp)
+            .map_err(errore)
+            .and_then(|_| verifica_integrita(&tmp));
+        if let Err(e) = copia {
+            let _ = std::fs::remove_file(&tmp);
+            return Err(e);
+        }
+        let esito = self.sostituisci_con(&tmp, dir_backup);
+        let _ = std::fs::remove_file(&tmp);
+        esito
+    }
+
+    fn sostituisci_con(&self, tmp: &Path, dir_backup: &Path) -> Result<()> {
+        let mut guardia = self.guardia()?;
+        let conn = attiva(&mut guardia)?;
+        let ora: String = conn
+            .query_row("SELECT strftime('%Y%m%d-%H%M%S', 'now', 'localtime')", [], |r| r.get(0))
+            .map_err(errore)?;
+        backup_ruotato(conn, &self.percorso, dir_backup, &ora)?;
 
         // Chiude la connessione corrente prima di sostituire il file.
-        let vecchia = std::mem::replace(&mut *conn, Connection::open_in_memory().map_err(errore)?);
-        if let Err((c, e)) = vecchia.close() {
-            *conn = c;
-            let _ = std::fs::remove_file(&tmp);
-            return Err(errore(e));
+        if let Some(vecchia) = guardia.take() {
+            if let Err((c, e)) = vecchia.close() {
+                *guardia = Some(c);
+                return Err(errore(e));
+            }
         }
-        let sostituzione = std::fs::rename(&tmp, &self.percorso).map_err(errore);
-        if sostituzione.is_err() {
-            let _ = std::fs::remove_file(&tmp);
-        }
-        // Riapre comunque il file: quello nuovo, o l'originale se la sostituzione è fallita.
-        *conn = apri_connessione(&self.percorso)?;
+        let sostituzione = std::fs::rename(tmp, &self.percorso).map_err(errore);
+        // Riapre il file: quello nuovo, o l'originale se la sostituzione è fallita.
+        // Se la riapertura fallisce la connessione resta None: errore esplicito ovunque.
+        let riaperta = apri_connessione(&self.percorso)
+            .map_err(|e| format!("{NON_DISPONIBILE} ({e})"))?;
+        *guardia = Some(riaperta);
         sostituzione
     }
 }
@@ -422,6 +451,37 @@ mod test {
         drop(store);
         let riaperto = Store::apri(&dir.path().join("ai-act.db")).unwrap();
         assert_eq!(testi(&riaperto), vec!["originale"]);
+    }
+
+    #[test]
+    fn ripristina_il_backup_piu_vecchio_con_10_backup_presenti() {
+        let dir = TempDir::new().unwrap();
+        let store = store_con_tabella(&dir);
+        let dir_backup = dir.path().join("backup");
+        for i in 0..10 {
+            store
+                .batch(&[ist("INSERT INTO t (testo) VALUES (?)", vec![json!(format!("riga {i}"))])])
+                .unwrap();
+            store.backup_avvio(&dir_backup, &format!("20000101-0000{:02}", i)).unwrap();
+        }
+        let piu_vecchio = dir_backup.join("ai-act-20000101-000000.db");
+        store.ripristina(&piu_vecchio, &dir_backup).unwrap();
+        assert_eq!(testi(&store), vec!["riga 0"]);
+        let db: Vec<String> = file_backup(&dir_backup).into_iter().filter(|n| n.ends_with(".db")).collect();
+        assert_eq!(db.len(), 10);
+    }
+
+    #[test]
+    fn connessione_persa_restituisce_errore_esplicito() {
+        let dir = TempDir::new().unwrap();
+        let store = store_con_tabella(&dir);
+        store.simula_connessione_persa();
+        let atteso = Err(NON_DISPONIBILE.to_string());
+        assert_eq!(store.select("SELECT 1", &[]).map(|_| ()), atteso);
+        assert_eq!(store.batch(&[ist("INSERT INTO t (testo) VALUES ('x')", vec![])]), atteso);
+        assert_eq!(store.backup_in(&dir.path().join("copia.db")), atteso);
+        assert_eq!(store.backup_avvio(&dir.path().join("backup"), "20261023-120000").map(|_| ()), atteso);
+        assert!(!dir.path().join("copia.db").exists());
     }
 
     #[test]
