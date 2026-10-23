@@ -38,6 +38,16 @@ jobs:
       - run: npm run e2e
         env:
           CI: 'true'
+      - name: Carica i risultati dei test e2e
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            ai-act-app/test-results
+            ai-act-app/playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
 
   build:
     needs: test
