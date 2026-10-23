@@ -1,0 +1,53 @@
+:root {
+  --sfondo: #f6f7f9;
+  --superficie: #fff;
+  --testo: #1c2330;
+  --testo-tenue: #5b6577;
+  --bordo: #d5d9e0;
+  --primario: #1d4ed8;
+  --primario-testo: #fff;
+  --ok: #15803d;
+  --attenzione: #b45309;
+  --errore: #b91c1c;
+  --bloccata: #9aa3b2;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: var(--sfondo); color: var(--testo); }
+a { color: var(--primario); }
+.intestazione { background: var(--superficie); border-bottom: 1px solid var(--bordo); padding: 12px 24px; font-weight: 600; }
+.intestazione a { text-decoration: none; color: var(--testo); }
+.contenuto { max-width: 960px; margin: 0 auto; padding: 24px; }
+.barra-azioni { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+.barra-azioni h1 { flex: 1; margin: 0; }
+.pulsante { display: inline-block; padding: 8px 14px; border: 1px solid var(--bordo); border-radius: 6px; background: var(--superficie); color: var(--testo); font: inherit; cursor: pointer; text-decoration: none; }
+.pulsante-primario { background: var(--primario); border-color: var(--primario); color: var(--primario-testo); }
+.pulsante-pericolo { color: var(--errore); border-color: var(--errore); }
+.pulsante:disabled { opacity: .5; cursor: not-allowed; }
+.filtri { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.filtri input, .filtri select { padding: 8px; border: 1px solid var(--bordo); border-radius: 6px; font: inherit; }
+.filtri input { flex: 1; min-width: 220px; }
+.elenco-clienti, .elenco-sistemi, .log { list-style: none; padding: 0; margin: 0; }
+.riga-cliente { background: var(--superficie); border: 1px solid var(--bordo); border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
+.riga-testa { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.nome-cliente { font-weight: 600; }
+.badge { font-size: .8rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.badge-ok { color: var(--ok); }
+.badge-attenzione { color: var(--attenzione); }
+.prossima-azione, .vuoto { color: var(--testo-tenue); margin: 6px 0 0; }
+.roadmap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 8px 0; }
+.roadmap-tappe { display: flex; flex: 1; gap: 4px; list-style: none; padding: 0; margin: 0; min-width: 260px; }
+.tappa { flex: 1; padding: 4px 6px; border-radius: 4px; background: var(--bordo); font-size: .8rem; display: flex; flex-direction: column; }
+.tappa-completata { background: var(--ok); color: #fff; }
+.tappa-in_corso { background: var(--primario); color: #fff; }
+.tappa-bloccata { background: transparent; border: 1px dashed var(--bloccata); color: var(--testo-tenue); }
+.tappa-dettaglio { font-size: .7rem; opacity: .9; }
+.roadmap-percentuale { font-weight: 700; }
+.roadmap-azione { flex-basis: 100%; margin: 0; font-weight: 600; }
+.modulo { background: var(--superficie); border: 1px solid var(--bordo); border-radius: 8px; padding: 16px; display: grid; gap: 12px; }
+.campo { display: flex; flex-direction: column; gap: 4px; }
+.campo input[type="text"], .campo input[type="email"], .campo input[type="date"], .campo textarea { padding: 8px; border: 1px solid var(--bordo); border-radius: 6px; font: inherit; }
+.campo input[type="checkbox"] { align-self: flex-start; }
+.campo [aria-invalid="true"] { border-color: var(--errore); }
+.errore-campo { color: var(--errore); font-size: .875rem; }
+.avviso { background: #fef2f2; border: 1px solid var(--errore); color: var(--errore); padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+.log li, .elenco-sistemi li { padding: 4px 0; border-bottom: 1px solid var(--bordo); }
