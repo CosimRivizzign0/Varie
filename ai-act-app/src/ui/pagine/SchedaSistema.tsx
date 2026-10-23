@@ -3,6 +3,7 @@ import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { validaSistema } from '../../domain/sistema';
 import { RUOLI, type Cliente, type RuoloCliente, type SistemaAI } from '../../domain/tipi';
 import { ErroreValidazione } from '../../archivio/errori';
+import type { RicalcoloEsito } from '../../archivio/repository';
 import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
 import { conferma } from '../conferma';
@@ -126,11 +127,11 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
     setAvviso(null);
     try {
       if (id) {
-        const aggiornato = await repo.aggiornaSistema(id, input(valori));
-        if (aggiornato.ruoloCliente !== ruoloSalvato.current) {
-          ruoloSalvato.current = aggiornato.ruoloCliente;
-          await ricalcolaValutazione(id, aggiornato.ruoloCliente);
-        }
+        const dati = input(valori);
+        const ruolo = dati.ruoloCliente as RuoloCliente;
+        const ricalcolo = ruolo !== ruoloSalvato.current ? await ricalcoloEsito(id, ruolo) : undefined;
+        const aggiornato = await repo.aggiornaSistema(id, dati, ricalcolo);
+        ruoloSalvato.current = aggiornato.ruoloCliente;
       } else await repo.creaSistema(cliente.id, input(valori));
       vaiAlCliente();
       return;
@@ -144,12 +145,15 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
     }
   }
 
-  // Obblighi e ruolo effettivo dipendono dal ruolo del cliente: si ricalcola l'esito (la conferma si azzera).
-  async function ricalcolaValutazione(sistemaId: string, ruolo: RuoloCliente) {
-    if (ERRORE_REGOLE || !REGOLE) return;
+  // Obblighi e ruolo effettivo dipendono dal ruolo del cliente: l'esito si ricalcola prima di salvare
+  // e viene scritto insieme al sistema (la conferma si azzera). Senza regole il cambio è rifiutato.
+  async function ricalcoloEsito(sistemaId: string, ruolo: RuoloCliente): Promise<RicalcoloEsito | undefined> {
     const v = await repo.getValutazioneAttiva(sistemaId);
-    if (!v || !v.esito) return;
-    await repo.salvaRisposte(v.id, v.risposte, calcolaEsito(REGOLE, v.risposte, ruolo), REGOLE.meta.versione);
+    if (!v || !v.esito) return undefined;
+    if (ERRORE_REGOLE || !REGOLE) {
+      throw new Error("Ruolo del cliente non modificato: regole non caricate, impossibile ricalcolare l'esito della valutazione.");
+    }
+    return { valutazioneId: v.id, esito: calcolaEsito(REGOLE, v.risposte, ruolo), versioneRegole: REGOLE.meta.versione };
   }
 
   async function spostaNelCestino() {

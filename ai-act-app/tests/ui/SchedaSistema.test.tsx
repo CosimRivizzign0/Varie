@@ -10,6 +10,19 @@ import { REGOLE } from '../../src/regole/attive';
 import { calcolaEsito } from '../../src/regole/motore';
 import type { Risposte } from '../../src/regole/tipi';
 
+// Il calcolo dell'esito si può far fallire per singolo test.
+const calcolo = vi.hoisted(() => ({ fallisci: false }));
+vi.mock('../../src/regole/motore', async (originale) => {
+  const m = await originale<typeof import('../../src/regole/motore')>();
+  return {
+    ...m,
+    calcolaEsito: (...a: Parameters<typeof m.calcolaEsito>) => {
+      if (calcolo.fallisci) throw new Error('Errore nel calcolo dell\'esito');
+      return m.calcolaEsito(...a);
+    },
+  };
+});
+
 const sistema = {
   nome: 'Chatbot', fornitore: 'OpenAI', scopo: 'Assistenza', reparto: null, dataAvvio: null, ruoloCliente: 'deployer',
 };
@@ -130,6 +143,27 @@ describe('SchedaSistema esistente', () => {
       expect(v?.esito?.ruoloEffettivo).toBe('deployer');
       expect(v?.esito).toEqual(calcolaEsito(REGOLE!, risposte, 'deployer'));
       expect(v).toMatchObject({ stato: 'completata', classeConfermata: null, confermatoIl: null });
+    });
+
+    it('ricalcolo fallito: ruolo ed esito invariati, errore in alert; al nuovo tentativo si ricalcola', async () => {
+      const { repo, s } = await confermato();
+      renderizza(rotte(), repo, `/sistemi/${s.id}`);
+      const u = userEvent.setup();
+      await u.selectOptions(await screen.findByLabelText('Ruolo del cliente'), 'deployer');
+      calcolo.fallisci = true;
+      try {
+        await u.click(screen.getByRole('button', { name: 'Salva' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent("Errore nel calcolo dell'esito");
+      } finally {
+        calcolo.fallisci = false;
+      }
+      expect((await repo.getSistema(s.id))?.ruoloCliente).toBe('da_definire');
+      expect(await repo.getValutazioneAttiva(s.id)).toMatchObject({ stato: 'confermata', classeConfermata: 'alto_rischio' });
+      // Il ruolo salvato non è stato aggiornato: il secondo Salva ricalcola davvero
+      await u.click(screen.getByRole('button', { name: 'Salva' }));
+      expect(await screen.findByRole('link', { name: 'Chatbot' })).toBeInTheDocument();
+      expect((await repo.getSistema(s.id))?.ruoloCliente).toBe('deployer');
+      expect(await repo.getValutazioneAttiva(s.id)).toMatchObject({ stato: 'completata', esito: { ruoloEffettivo: 'deployer' } });
     });
 
     it('senza cambio di ruolo la conferma resta', async () => {

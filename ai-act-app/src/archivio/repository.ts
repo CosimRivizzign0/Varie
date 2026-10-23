@@ -38,7 +38,11 @@ export interface Repository {
   elencaSistemi(clienteId: string): Promise<SistemaAI[]>;
   getSistema(id: string): Promise<SistemaAI | null>;
   creaSistema(clienteId: string, input: unknown): Promise<SistemaAI>;
-  aggiornaSistema(id: string, input: unknown): Promise<SistemaAI>;
+  /**
+   * Aggiorna il sistema. Con `ricalcolo` (cambio del ruolo del cliente) salva nello stesso batch anche
+   * l'esito ricalcolato della valutazione attiva del sistema, che torna da confermare.
+   */
+  aggiornaSistema(id: string, input: unknown, ricalcolo?: RicalcoloEsito): Promise<SistemaAI>;
   eliminaSistema(id: string): Promise<void>;
   ripristinaSistema(id: string): Promise<void>;
   confermaInventario(clienteId: string): Promise<void>;
@@ -54,6 +58,13 @@ export interface Repository {
   registraReport(r: Omit<RegistroReport, 'id' | 'creatoIl'>): Promise<RegistroReport>;
   /** Report del cliente, il più recente prima. */
   elencaReport(clienteId: string): Promise<RegistroReport[]>;
+}
+
+/** Esito ricalcolato della valutazione attiva `valutazioneId` (risposte invariate). */
+export interface RicalcoloEsito {
+  valutazioneId: string;
+  esito: EsitoValutazione;
+  versioneRegole: string;
 }
 
 export interface DipendenzeRepository {
@@ -217,6 +228,38 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
     const s = await leggiSistema(v.sistemaId);
     if (!s || s.eliminatoIl !== null) throw new ErroreNonTrovato('Valutazione non trovata');
     return { v, s };
+  }
+
+  // Risposte ed esito ricalcolato: la conferma si azzera; attività solo al passaggio a completata.
+  function istruzioniRisposte(
+    v: Valutazione,
+    s: SistemaAI,
+    risposte: Risposte,
+    esito: EsitoValutazione,
+    versioneRegole: string,
+    t: string,
+  ): Istruzione[] {
+    const stato = esito.completo ? 'completata' : 'in_corso';
+    const istruzioni: Istruzione[] = [
+      {
+        sql: `UPDATE valutazioni SET risposte = ?, esito = ?, stato = ?, versione_regole = ?,
+                classe_confermata = NULL, nota_modifica = NULL, confermato_il = NULL, modificato_il = ?
+              WHERE id = ?`,
+        params: [JSON.stringify(risposte), JSON.stringify(esito), stato, versioneRegole, t, v.id],
+      },
+    ];
+    if (v.stato === 'in_corso' && stato === 'completata') {
+      istruzioni.push(
+        attivita(
+          s.clienteId,
+          'modificato',
+          `Valutazione di «${s.nome}» completata: ${ETICHETTE_CLASSE[esito.classe]}`,
+          t,
+          s.id,
+        ),
+      );
+    }
+    return istruzioni;
   }
 
   const istruzioniCancellaValutazioniCliente = (id: string): Istruzione => ({
@@ -423,10 +466,16 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
       return (await leggiSistema(id)) as SistemaAI;
     },
 
-    async aggiornaSistema(id, input) {
+    async aggiornaSistema(id, input, ricalcolo) {
       const corrente = await sistemaAttivo(id);
       const v = validaSis(input);
       const t = ora().toISOString();
+      let istruzioniValutazione: Istruzione[] = [];
+      if (ricalcolo) {
+        const { v: val, s } = await valutazioneModificabile(ricalcolo.valutazioneId);
+        if (s.id !== id) throw new ErroreNonTrovato('Valutazione non trovata');
+        istruzioniValutazione = istruzioniRisposte(val, s, val.risposte, ricalcolo.esito, ricalcolo.versioneRegole, t);
+      }
       await driver.batch([
         {
           sql: `UPDATE sistemi SET nome = ?, fornitore = ?, scopo = ?, ruolo_cliente = ?,
@@ -434,6 +483,7 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
                 WHERE id = ?`,
           params: [v.nome, v.fornitore, v.scopo, v.ruoloCliente, v.reparto, v.dataAvvio, t, id],
         },
+        ...istruzioniValutazione,
         attivita(corrente.clienteId, 'modificato', `Sistema "${v.nome}" modificato`, t, id),
       ]);
       return (await leggiSistema(id)) as SistemaAI;
@@ -521,28 +571,7 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
 
     async salvaRisposte(id, risposte, esito, versioneRegole) {
       const { v, s } = await valutazioneModificabile(id);
-      const t = ora().toISOString();
-      const stato = esito.completo ? 'completata' : 'in_corso';
-      const istruzioni: Istruzione[] = [
-        {
-          sql: `UPDATE valutazioni SET risposte = ?, esito = ?, stato = ?, versione_regole = ?,
-                  classe_confermata = NULL, nota_modifica = NULL, confermato_il = NULL, modificato_il = ?
-                WHERE id = ?`,
-          params: [JSON.stringify(risposte), JSON.stringify(esito), stato, versioneRegole, t, id],
-        },
-      ];
-      if (v.stato === 'in_corso' && stato === 'completata') {
-        istruzioni.push(
-          attivita(
-            s.clienteId,
-            'modificato',
-            `Valutazione di «${s.nome}» completata: ${ETICHETTE_CLASSE[esito.classe]}`,
-            t,
-            s.id,
-          ),
-        );
-      }
-      await driver.batch(istruzioni);
+      await driver.batch(istruzioniRisposte(v, s, risposte, esito, versioneRegole, ora().toISOString()));
       return (await leggiValutazione(id)) as Valutazione;
     },
 

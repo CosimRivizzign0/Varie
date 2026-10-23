@@ -157,6 +157,59 @@ describe('repository valutazioni', () => {
     await expect(repo.confermaValutazione(b.id, 'minimo', null)).rejects.toBeInstanceOf(ErroreNonTrovato);
   });
 
+  describe('aggiornaSistema con ricalcolo dell\'esito', () => {
+    async function confermata() {
+      const v = await repo.avviaValutazione(sid, '1.0.0');
+      await repo.salvaRisposte(v.id, { q: 'si' }, esito({ ruoloEffettivo: 'deployer' }), '1.0.0');
+      return repo.confermaValutazione(v.id, 'minimo', null);
+    }
+
+    it('ruolo ed esito nello stesso batch: conferma azzerata, risposte invariate, attività', async () => {
+      const v = await confermata();
+      adesso = new Date('2026-10-05T10:00:00.000Z');
+      const nuovo = esito({ ruoloEffettivo: 'fornitore', classe: 'alto_rischio' });
+      const agg = await repo.aggiornaSistema(sid, { ...sis, ruoloCliente: 'fornitore' }, {
+        valutazioneId: v.id, esito: nuovo, versioneRegole: '1.1.0',
+      });
+      expect(agg.ruoloCliente).toBe('fornitore');
+      const dopo = await repo.getValutazioneAttiva(sid);
+      expect(dopo).toMatchObject({
+        id: v.id, esito: nuovo, risposte: { q: 'si' }, stato: 'completata', versioneRegole: '1.1.0',
+        classeConfermata: null, notaModifica: null, confermatoIl: null, modificatoIl: adesso.toISOString(),
+      });
+      expect((await repo.elencaAttivita(cid))[0]).toMatchObject({ tipo: 'modificato', descrizione: 'Sistema "Chatbot" modificato' });
+    });
+
+    it('valutazione non attiva del sistema: errore e nulla cambia (né ruolo né esito)', async () => {
+      const v = await confermata();
+      const altro = (await repo.creaSistema(cid, { ...sis, nome: 'Altro' })).id;
+      const vAltro = await repo.avviaValutazione(altro, '1.0.0');
+      const ricalcolo = { valutazioneId: vAltro.id, esito: esito({ ruoloEffettivo: 'fornitore' }), versioneRegole: '1.0.0' };
+      await expect(repo.aggiornaSistema(sid, { ...sis, ruoloCliente: 'fornitore' }, ricalcolo)).rejects.toBeInstanceOf(ErroreNonTrovato);
+      await expect(
+        repo.aggiornaSistema(sid, { ...sis, ruoloCliente: 'fornitore' }, { ...ricalcolo, valutazioneId: 'zz' }),
+      ).rejects.toBeInstanceOf(ErroreNonTrovato);
+      expect((await repo.getSistema(sid))?.ruoloCliente).toBe('deployer');
+      expect(await repo.getValutazioneAttiva(sid)).toMatchObject({ id: v.id, stato: 'confermata', classeConfermata: 'minimo' });
+    });
+
+    it('batch fallito: né ruolo né esito salvati', async () => {
+      const v = await confermata();
+      const batch = driver.batch.bind(driver);
+      driver.batch = async () => {
+        throw new Error('disco pieno');
+      };
+      await expect(
+        repo.aggiornaSistema(sid, { ...sis, ruoloCliente: 'fornitore' }, {
+          valutazioneId: v.id, esito: esito({ ruoloEffettivo: 'fornitore' }), versioneRegole: '1.0.0',
+        }),
+      ).rejects.toThrow('disco pieno');
+      driver.batch = batch;
+      expect((await repo.getSistema(sid))?.ruoloCliente).toBe('deployer');
+      expect(await repo.getValutazioneAttiva(sid)).toMatchObject({ stato: 'confermata' });
+    });
+  });
+
   it('eliminaDefinitivamente sistema rimuove le valutazioni', async () => {
     await repo.avviaValutazione(sid, '1');
     await repo.avviaValutazione(sid, '1');
