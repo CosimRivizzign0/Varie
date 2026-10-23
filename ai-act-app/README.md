@@ -19,6 +19,15 @@ Note:
 - `npm run e2e`: se Chromium di Playwright non e' installato, usa `npx playwright install chromium` oppure imposta `CHROMIUM_PATH` con il percorso di un Chromium esistente.
 - `npm run tauri dev` su Linux richiede WebKitGTK (e le altre dipendenze di Tauri).
 
+## Regole AI Act
+
+Le regole di classificazione (domande del questionario, esiti, obblighi, date di applicazione) sono nel file `regole/ai-act.json`, validato all'avvio. Se il file non e' valido, il questionario mostra un avviso al posto delle domande.
+
+- **Versione**: `meta.versione` (es. `1.0.0`). Ogni valutazione salva la versione delle regole con cui e' stata compilata.
+- **Stato di ogni voce** (campo `stato`): `bozza` (scritta, non ancora controllata), `validata` (revisionata e approvata) o `da_verificare` (norma incerta o in evoluzione). Se l'esito dipende da voci non `validata`, l'app lo segnala con l'avviso «Regole non ancora validate».
+- **Revisione**: `npm run regole:revisione` genera `docs/ai-act-app/revisione-regole.md`, la tabella delle voci con riferimento normativo, condizioni e stato, da far rivedere e correggere nel JSON.
+- **Cambio di versione**: quando si modifica `meta.versione`, le valutazioni compilate con una versione diversa mostrano il badge **Da rivedere** nella scheda del sistema: restano consultabili, e si puo' avviare una nuova valutazione con le regole aggiornate (la precedente resta nello storico).
+
 ## Dove sono i dati
 
 Nella cartella dati dell'app, identificativo `com.cosimorivizzigno.aiactassessment`:

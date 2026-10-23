@@ -45,6 +45,58 @@ test('flusso completo: cliente, due sistemi, conferma inventario, dashboard al 4
   expect(erroriConsole).toEqual([]);
 });
 
+test('valutazione: screening CV (deployer) → Alto rischio → conferma → roadmap all\'80%', async ({ page }) => {
+  const erroriConsole: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') erroriConsole.push(msg.text());
+  });
+  page.on('pageerror', (err) => erroriConsole.push(err.message));
+
+  await page.goto('/');
+  await creaCliente(page);
+  await aggiungiSistema(page, 'Screening CV', 'Acme AI', 'Selezione del personale');
+  await page.getByRole('button', { name: 'Conferma inventario' }).click();
+  await expect(page.getByText('Prossima azione: Compila il questionario per «Screening CV»')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Screening CV' }).click();
+  await page.getByRole('button', { name: 'Avvia valutazione' }).click();
+  await expect(page.getByRole('heading', { name: 'Valutazione AI Act' })).toBeVisible();
+
+  const vaiAllEsito = page.getByRole('button', { name: "Vai all'esito" });
+  for (let pagina = 0; pagina < 10; pagina++) {
+    // Risponde a tutte le domande visibili della sezione (le visibili possono cambiare dopo una risposta).
+    // Ripete finché non restano gruppi senza risposta.
+    for (let giro = 0; giro < 5; giro++) {
+      const gruppi = page.locator('fieldset.domanda');
+      const totale = await gruppi.count();
+      for (let i = 0; i < totale; i++) {
+        const gruppo = gruppi.nth(i);
+        const testo = (await gruppo.locator('legend').textContent()) ?? '';
+        // Caso 3: è un sistema di IA (Sì) usato per selezionare personale (Sì); tutto il resto No.
+        const si = testo.startsWith('Il sistema è un sistema di IA') || testo.startsWith('Il sistema è usato per selezionare personale');
+        await gruppo.getByLabel(si ? 'Sì' : 'No', { exact: true }).check();
+      }
+      if ((await page.locator('fieldset.domanda').count()) === totale) break;
+    }
+    if (await vaiAllEsito.isVisible()) break;
+    await page.getByRole('button', { name: 'Avanti' }).click();
+  }
+  // Attende che tutte le risposte visibili siano salvate (n/n) prima di passare all'esito.
+  await expect(page.locator('.avanzamento span')).toHaveText(/^(\d+)\/\1$/);
+  await vaiAllEsito.click();
+
+  await expect(page.getByText('Alto rischio', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Conferma classificazione' }).click();
+  await expect(page.getByText(/Confermata il/)).toBeVisible();
+
+  await page.getByRole('link', { name: 'AI Act Assessment' }).click();
+  const riga = page.getByRole('listitem').filter({ hasText: 'Rossi S.r.l.' });
+  await expect(riga.getByText('80%')).toBeVisible();
+  await expect(riga.getByText('In attesa della Fase 2b')).toBeVisible();
+
+  expect(erroriConsole).toEqual([]);
+});
+
 test('cestino: sposta il cliente nel cestino e lo ripristina', async ({ page }) => {
   await page.goto('/');
   await creaCliente(page);

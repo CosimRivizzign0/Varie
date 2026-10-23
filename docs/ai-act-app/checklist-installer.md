@@ -31,6 +31,15 @@ Serve per verificare che l'app si installi e che i dati non vadano persi. Non se
 11. [ ] Nell'app clicca **Esporta backup** e salva il file sul **Desktop**.
 12. [ ] Clicca **Ripristina backup**, scegli il file appena salvato sul Desktop e conferma. Deve comparire «Backup ripristinato.» e i dati devono essere ancora tutti presenti, compreso il sistema di prova nel cestino.
 
+## D. Valutazione AI Act
+
+13. [ ] Apri il cliente di prova, aggiungi un sistema AI con scopo «Selezione del personale» e ruolo **Deployer (utilizzatore)**, poi clicca **Conferma inventario**.
+14. [ ] Apri il sistema e, nel riquadro **Valutazione AI Act**, clicca **Avvia valutazione**.
+15. [ ] Rispondi alle domande: **Sì** alla prima (e' un sistema di IA), **Sì** a «Il sistema e' usato per selezionare personale…», **No** a tutte le altre. Usa **Avanti** tra le sezioni. Chiudi l'app a meta' e riaprila: dal riquadro, **Riprendi** deve mostrare le risposte gia' date.
+16. [ ] All'ultima sezione clicca **Vai all'esito**: **deve comparire «Alto rischio»**, con motivazione e obblighi (tra questi gli articoli 26 e 86).
+17. [ ] Clicca **Conferma classificazione**: deve comparire «Confermata il…» con la data di oggi.
+18. [ ] Torna alla pagina iniziale (clic su **AI Act Assessment**): nella riga del cliente la roadmap deve mostrare **80%** e la prossima azione **In attesa della Fase 2b**.
+
 Consiglio: tieni attivata la cifratura del disco (BitLocker su Windows, FileVault su Mac), perché i dati dei clienti sono salvati sul computer.
 
 ## Se qualcosa non va
