@@ -121,6 +121,34 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
     { sql: 'DELETE FROM clienti WHERE id = ?', params: [id] },
   ];
 
+  async function elencaCestino(): Promise<ElementoCestino[]> {
+    const clienti = await driver.select<Riga>(
+      'SELECT id, ragione_sociale, eliminato_il FROM clienti WHERE eliminato_il IS NOT NULL',
+    );
+    const sistemi = await driver.select<Riga>(
+      `SELECT s.id, s.nome, s.eliminato_il, c.ragione_sociale AS cliente_nome
+       FROM sistemi s JOIN clienti c ON c.id = s.cliente_id
+       WHERE s.eliminato_il IS NOT NULL AND c.eliminato_il IS NULL`,
+    );
+    const elementi: ElementoCestino[] = [
+      ...clienti.map((r) => ({
+        tipo: 'cliente' as const,
+        id: r.id as string,
+        nome: r.ragione_sociale as string,
+        clienteNome: null,
+        eliminatoIl: r.eliminato_il as string,
+      })),
+      ...sistemi.map((r) => ({
+        tipo: 'sistema' as const,
+        id: r.id as string,
+        nome: r.nome as string,
+        clienteNome: r.cliente_nome as string,
+        eliminatoIl: r.eliminato_il as string,
+      })),
+    ];
+    return elementi.sort((a, b) => (a.eliminatoIl < b.eliminatoIl ? 1 : a.eliminatoIl > b.eliminatoIl ? -1 : 0));
+  }
+
   return {
     async elencaClienti() {
       const righe = await driver.select<Riga>(
@@ -218,33 +246,7 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
       }));
     },
 
-    async elencaCestino() {
-      const clienti = await driver.select<Riga>(
-        'SELECT id, ragione_sociale, eliminato_il FROM clienti WHERE eliminato_il IS NOT NULL',
-      );
-      const sistemi = await driver.select<Riga>(
-        `SELECT s.id, s.nome, s.eliminato_il, c.ragione_sociale AS cliente_nome
-         FROM sistemi s JOIN clienti c ON c.id = s.cliente_id
-         WHERE s.eliminato_il IS NOT NULL`,
-      );
-      const elementi: ElementoCestino[] = [
-        ...clienti.map((r) => ({
-          tipo: 'cliente' as const,
-          id: r.id as string,
-          nome: r.ragione_sociale as string,
-          clienteNome: null,
-          eliminatoIl: r.eliminato_il as string,
-        })),
-        ...sistemi.map((r) => ({
-          tipo: 'sistema' as const,
-          id: r.id as string,
-          nome: r.nome as string,
-          clienteNome: r.cliente_nome as string,
-          eliminatoIl: r.eliminato_il as string,
-        })),
-      ];
-      return elementi.sort((a, b) => (a.eliminatoIl < b.eliminatoIl ? 1 : a.eliminatoIl > b.eliminatoIl ? -1 : 0));
-    },
+    elencaCestino,
 
     async eliminaDefinitivamente(tipo, id) {
       if (tipo === 'cliente') {
@@ -263,18 +265,13 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
 
     async svuotaCestinoScaduto() {
       const adesso = ora();
-      const cestino = await this.elencaCestino();
+      const cestino = await elencaCestino();
       const clientiScaduti = cestino.filter((e) => e.tipo === 'cliente' && isScaduto(e.eliminatoIl, adesso));
-      const idClienti = new Set(clientiScaduti.map((e) => e.id));
       const sistemiScaduti = cestino.filter((e) => e.tipo === 'sistema' && isScaduto(e.eliminatoIl, adesso));
       const istruzioni: Istruzione[] = [];
-      let rimossi = clientiScaduti.length;
       for (const c of clientiScaduti) istruzioni.push(...istruzioniCancellaCliente(c.id));
-      for (const s of sistemiScaduti) {
-        istruzioni.push({ sql: 'DELETE FROM sistemi WHERE id = ?', params: [s.id] });
-        const [r] = await driver.select<Riga>('SELECT cliente_id FROM sistemi WHERE id = ?', [s.id]);
-        if (!r || !idClienti.has(r.cliente_id as string)) rimossi++;
-      }
+      for (const s of sistemiScaduti) istruzioni.push({ sql: 'DELETE FROM sistemi WHERE id = ?', params: [s.id] });
+      const rimossi = clientiScaduti.length + sistemiScaduti.length;
       if (istruzioni.length > 0) await driver.batch(istruzioni);
       return rimossi;
     },

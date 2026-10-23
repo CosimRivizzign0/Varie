@@ -86,15 +86,13 @@ describe('repository clienti', () => {
     expect((await repo.elencaClienti()).map((c) => c.ragioneSociale)).toEqual(['Alfa', 'beta']);
   });
 
-  it('elimina: sparisce, compare nel cestino, sistemi seguono', async () => {
+  it('elimina: sparisce, compare nel cestino (solo la voce cliente)', async () => {
     const c = await repo.creaCliente(input());
     await sistema('S1', c.id, null);
     await repo.eliminaCliente(c.id);
     expect(await repo.elencaClienti()).toHaveLength(0);
     const cestino = await repo.elencaCestino();
-    expect(cestino.map((e) => [e.tipo, e.id, e.clienteNome])).toEqual(
-      expect.arrayContaining([['cliente', c.id, null], ['sistema', 'S1', 'Acme Srl']]),
-    );
+    expect(cestino.map((e) => [e.tipo, e.id, e.clienteNome])).toEqual([['cliente', c.id, null]]);
     await expect(repo.eliminaCliente(c.id)).rejects.toBeInstanceOf(ErroreNonTrovato);
     expect((await repo.elencaAttivita(c.id))[0].descrizione).toBe('Cliente spostato nel cestino');
   });
@@ -159,5 +157,56 @@ describe('repository clienti', () => {
     expect(await repo.svuotaCestinoScaduto()).toBe(1);
     expect(await repo.getCliente(c.id)).not.toBeNull();
     expect(await repo.elencaAttivita(c.id)).toHaveLength(1);
+  });
+
+  it('cestino: cliente con 2 sistemi eliminato = 1 sola voce; sistema di cliente attivo = voce propria', async () => {
+    const c = await repo.creaCliente(input());
+    await sistema('S1', c.id, null);
+    await sistema('S2', c.id, null);
+    await repo.eliminaCliente(c.id);
+    expect(await repo.elencaCestino()).toHaveLength(1);
+    await repo.ripristinaCliente(c.id);
+    await driver.batch([{ sql: "UPDATE sistemi SET eliminato_il = '2026-09-30T00:00:00.000Z' WHERE id = ?", params: ['S1'] }]);
+    expect((await repo.elencaCestino()).map((e) => [e.tipo, e.id, e.clienteNome])).toEqual([
+      ['sistema', 'S1', 'Acme Srl'],
+    ]);
+  });
+
+  it('conflitto al ripristino: nulla cambia', async () => {
+    const a = await repo.creaCliente(input());
+    await sistema('S1', a.id, null);
+    await repo.eliminaCliente(a.id);
+    await repo.creaCliente(input({ ragioneSociale: 'Beta Srl' }));
+    const prima = await driver.select('SELECT * FROM clienti ORDER BY id');
+    const sistPrima = await driver.select('SELECT * FROM sistemi');
+    const attPrima = await repo.elencaAttivita(a.id);
+    adesso = new Date('2026-10-09T00:00:00.000Z');
+    await expect(repo.ripristinaCliente(a.id)).rejects.toBeInstanceOf(ErrorePartitaIvaDuplicata);
+    expect(await driver.select('SELECT * FROM clienti ORDER BY id')).toEqual(prima);
+    expect(await driver.select('SELECT * FROM sistemi')).toEqual(sistPrima);
+    expect(await repo.elencaAttivita(a.id)).toEqual(attPrima);
+    expect((await driver.select<{ eliminato_il: string | null }>('SELECT eliminato_il FROM sistemi'))[0].eliminato_il).not.toBeNull();
+  });
+
+  it('aggiornaCliente mantiene inventarioConfermato', async () => {
+    const c = await repo.creaCliente(input());
+    await driver.batch([{ sql: 'UPDATE clienti SET inventario_confermato = 1 WHERE id = ?', params: [c.id] }]);
+    const a = await repo.aggiornaCliente(c.id, input({ settore: 'Altro' }));
+    expect(a.inventarioConfermato).toBe(true);
+  });
+
+  it('aggiornaCliente su cliente nel cestino: ErroreNonTrovato', async () => {
+    const c = await repo.creaCliente(input());
+    await repo.eliminaCliente(c.id);
+    await expect(repo.aggiornaCliente(c.id, input())).rejects.toBeInstanceOf(ErroreNonTrovato);
+  });
+
+  it('svuota: cliente scaduto con sistema scaduto conta 1', async () => {
+    const c = await repo.creaCliente(input());
+    await sistema('S1', c.id, '2026-09-01T00:00:00.000Z');
+    await repo.eliminaCliente(c.id);
+    adesso = new Date(adesso.getTime() + 31 * 86400000);
+    expect(await repo.svuotaCestinoScaduto()).toBe(1);
+    expect(await driver.select('SELECT * FROM sistemi')).toHaveLength(0);
   });
 });
