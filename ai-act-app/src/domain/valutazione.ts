@@ -28,6 +28,8 @@ export interface Valutazione {
 export interface SintesiValutazione {
   sistemaId: string;
   sistemaNome: string;
+  valutazioneId: string | null;
+  confermatoIl: string | null;
   stato: StatoValutazione | null;
   daRivedere: boolean;
 }
@@ -43,6 +45,8 @@ export function sintesiPerRoadmap(
     return {
       sistemaId: s.id,
       sistemaNome: s.nome,
+      valutazioneId: v?.id ?? null,
+      confermatoIl: v?.confermatoIl ?? null,
       stato: v?.stato ?? null,
       daRivedere: v !== null && v.versioneRegole !== versioneCorrente,
     };

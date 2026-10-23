@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { validaCliente } from '../../domain/cliente';
 import { calcolaRoadmap } from '../../domain/roadmap';
+import type { RegistroReport } from '../../domain/report';
 import { sintesiPerRoadmap, type SintesiValutazione } from '../../domain/valutazione';
 import { REGOLE } from '../../regole/attive';
 import { RUOLI, type Attivita, type Cliente, type SistemaAI } from '../../domain/tipi';
@@ -65,6 +66,7 @@ function Contenuto({ id }: { id: string | undefined }) {
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [sistemi, setSistemi] = useState<SistemaAI[]>([]);
   const [sintesi, setSintesi] = useState<SintesiValutazione[]>([]);
+  const [report, setReport] = useState<RegistroReport[]>([]);
   const [log, setLog] = useState<Attivita[]>([]);
   const [caricato, setCaricato] = useState(id === undefined);
   const [toccati, setToccati] = useState<Set<string>>(new Set());
@@ -88,6 +90,7 @@ function Contenuto({ id }: { id: string | undefined }) {
     const attive = await Promise.all(s.map((x) => repo.getValutazioneAttiva(x.id)));
     const sint = sintesiPerRoadmap(s, attive, REGOLE?.meta.versione ?? '');
     setSintesi(REGOLE ? sint : sint.map((x) => ({ ...x, daRivedere: false })));
+    setReport(await repo.elencaReport(id));
     setSistemi(s);
     setLog(a);
     setCaricato(true);
@@ -178,7 +181,7 @@ function Contenuto({ id }: { id: string | undefined }) {
       <p><Link to="/">← Clienti</Link></p>
       <h1>{cliente ? cliente.ragioneSociale : 'Nuovo cliente'}</h1>
       {cliente && (
-        <RoadmapBar roadmap={calcolaRoadmap(cliente, sistemi, new Date(), sintesi)} variante="estesa" />
+        <RoadmapBar roadmap={calcolaRoadmap(cliente, sistemi, new Date(), sintesi, report)} variante="estesa" />
       )}
       {avviso && <div role="alert" className="avviso">{avviso}</div>}
 

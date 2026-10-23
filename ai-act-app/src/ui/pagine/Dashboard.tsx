@@ -90,8 +90,9 @@ export function Dashboard() {
           clienti.map(async (cliente) => {
             const sistemi = await repo.elencaSistemi(cliente.id);
             const attive = await Promise.all(sistemi.map((s) => repo.getValutazioneAttiva(s.id)));
+            const report = await repo.elencaReport(cliente.id);
             const sintesi = sintesiPerRoadmap(sistemi, attive, REGOLE?.meta.versione ?? '');
-            return { cliente, roadmap: calcolaRoadmap(cliente, sistemi, oggi, REGOLE ? sintesi : sintesi.map((x) => ({ ...x, daRivedere: false }))) };
+            return { cliente, roadmap: calcolaRoadmap(cliente, sistemi, oggi, REGOLE ? sintesi : sintesi.map((x) => ({ ...x, daRivedere: false })), report) };
           }),
         );
         if (attivo) setRighe(caricate);
