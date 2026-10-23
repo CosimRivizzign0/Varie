@@ -20,7 +20,8 @@ function scarica(nome: string, byte: Uint8Array): string {
     a.click();
   } finally {
     a.remove();
-    URL.revokeObjectURL(url);
+    // Revoca differita: revocare subito può annullare il download in Chromium.
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
   }
   return nome;
 }

@@ -370,7 +370,10 @@ pub fn scrivi_file_atomico(percorso: &Path, contenuto: &[u8]) -> Result<()> {
         .file_name()
         .ok_or_else(|| format!("Percorso non valido: {}", percorso.display()))?
         .to_string_lossy();
-    let tmp = percorso.with_file_name(format!(".{nome}.{}.tmp", std::process::id()));
+    // Suffisso unico per chiamata: due scritture parallele sullo stesso file non condividono il tmp.
+    static CONTATORE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let n = CONTATORE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let tmp = percorso.with_file_name(format!(".{nome}.{}.{n}.tmp", std::process::id()));
     if let Err(e) = std::fs::write(&tmp, contenuto) {
         let _ = std::fs::remove_file(&tmp);
         return Err(format!("Impossibile scrivere {}: {e}", percorso.display()));

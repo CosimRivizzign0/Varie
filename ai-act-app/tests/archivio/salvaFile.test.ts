@@ -75,6 +75,7 @@ describe('salvaFile nell\'anteprima web', () => {
   let blob: Blob | null;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     tauri.attivo = false;
     invoke.mockReset();
     open.mockReset();
@@ -89,6 +90,7 @@ describe('salvaFile nell\'anteprima web', () => {
     clic = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
   });
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     clic.mockRestore();
   });
@@ -98,7 +100,7 @@ describe('salvaFile nell\'anteprima web', () => {
     expect(open).not.toHaveBeenCalled();
   });
 
-  it('salvaInCartella scarica via Blob e <a download>, poi revoca l\'URL', async () => {
+  it('salvaInCartella scarica via Blob e <a download>, poi revoca l\'URL in differita', async () => {
     let download = '';
     let href = '';
     clic.mockImplementation(function (this: HTMLAnchorElement) {
@@ -111,6 +113,8 @@ describe('salvaFile nell\'anteprima web', () => {
     expect(blob!.size).toBe(4);
     expect(download).toBe('a.docx');
     expect(href).toBe('blob:finto');
+    expect(revoca).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(30_000);
     expect(revoca).toHaveBeenCalledWith('blob:finto');
     expect(invoke).not.toHaveBeenCalled();
     expect(document.querySelector('a[download]')).toBeNull();
