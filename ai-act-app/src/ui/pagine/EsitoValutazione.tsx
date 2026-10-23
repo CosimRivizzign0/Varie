@@ -7,17 +7,9 @@ import { ERRORE_REGOLE, REGOLE } from '../../regole/attive';
 import { ETICHETTE_CLASSE, type Classe } from '../../regole/tipi';
 import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
+import { formattaData } from '../formatoData';
 
 const CLASSI = Object.keys(ETICHETTE_CLASSE) as Classe[];
-
-/** gg/mm/aaaa da una data ISO (solo data o con orario), senza spostamenti di fuso. */
-function formattaData(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  const d = new Date(iso);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
-}
 
 export function EsitoValutazione() {
   const { id } = useParams();
@@ -76,6 +68,7 @@ function Contenuto({ id }: { id: string }) {
     <>
       <p><Link to={`/sistemi/${id}`}>{sistema.nome}</Link></p>
       <h1>Esito della valutazione</h1>
+      <p><Link to={`/sistemi/${id}/valutazione`}>Torna al questionario</Link></p>
     </>
   );
 
@@ -84,7 +77,6 @@ function Contenuto({ id }: { id: string }) {
       <section>
         {intestazione}
         <p>Questionario incompleto</p>
-        <Link to={`/sistemi/${id}/valutazione`}>Torna al questionario</Link>
       </section>
     );
   }
@@ -92,6 +84,10 @@ function Contenuto({ id }: { id: string }) {
   const valutazioneId = valutazione.id;
   const confermata = valutazione.stato === 'confermata';
   const domande = ERRORE_REGOLE ? [] : (REGOLE?.domande ?? []);
+  const classeModificata =
+    confermata && valutazione.classeConfermata !== null && valutazione.classeConfermata !== esito.classe
+      ? valutazione.classeConfermata
+      : null;
 
   async function salva(classeScelta: Classe, notaScelta: string | null) {
     if (bloccato.current) return;
@@ -124,7 +120,17 @@ function Contenuto({ id }: { id: string }) {
       {intestazione}
       {errore && <div role="alert" className="avviso">{errore}</div>}
 
-      <p className="esito-classe" style={{ fontSize: '1.6rem', fontWeight: 700 }}>{ETICHETTE_CLASSE[esito.classe]}</p>
+      <p className="esito-classe" style={{ fontSize: '1.6rem', fontWeight: 700 }}>
+        {ETICHETTE_CLASSE[classeModificata ?? esito.classe]}
+      </p>
+      {classeModificata && (
+        <>
+          <p>Classe calcolata: {ETICHETTE_CLASSE[esito.classe]}</p>
+          <p className="avviso">
+            Classificazione modificata dal consulente: gli obblighi elencati si riferiscono alla classe calcolata.
+          </p>
+        </>
+      )}
       {esito.trasparenza && <p>+ obblighi di trasparenza</p>}
       {esito.dataApplicazioneClasse && <p>Applicabile dal {formattaData(esito.dataApplicazioneClasse)}</p>}
 
@@ -184,9 +190,6 @@ function Contenuto({ id }: { id: string }) {
       {confermata && (
         <div className="esito-confermato">
           <p>Confermata il {formattaData(valutazione.confermatoIl ?? valutazione.modificatoIl)}</p>
-          {valutazione.classeConfermata && valutazione.classeConfermata !== esito.classe && (
-            <p>Classe scelta: <strong>{ETICHETTE_CLASSE[valutazione.classeConfermata]}</strong></p>
-          )}
           {valutazione.notaModifica && <p>{valutazione.notaModifica}</p>}
         </div>
       )}

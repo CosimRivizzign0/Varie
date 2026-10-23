@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
@@ -8,6 +8,7 @@ import { calcolaEsito } from '../../src/regole/motore';
 import type { Risposte } from '../../src/regole/tipi';
 import type { Repository } from '../../src/archivio/repository';
 import { EsitoValutazione } from '../../src/ui/pagine/EsitoValutazione';
+import { Questionario } from '../../src/ui/pagine/Questionario';
 import { clienteValido, nuovoRepository, renderizza } from './aiuti';
 
 const BASE: Risposte = {
@@ -61,6 +62,15 @@ function rotte() {
   );
 }
 
+function rotteConQuestionario() {
+  return (
+    <Routes>
+      <Route path="/sistemi/:id/valutazione" element={<Questionario />} />
+      <Route path="/sistemi/:id/valutazione/esito" element={<EsitoValutazione />} />
+    </Routes>
+  );
+}
+
 async function preparato(modifiche: Risposte | null) {
   const repo: Repository = await nuovoRepository();
   const c = await repo.creaCliente(clienteValido());
@@ -68,7 +78,7 @@ async function preparato(modifiche: Risposte | null) {
   const v = await repo.avviaValutazione(s.id, '1.0.0');
   if (modifiche) {
     const r = { ...BASE, ...modifiche };
-    await repo.salvaRisposte(v.id, r, calcolaEsito(REGOLE!, r, 'deployer'));
+    await repo.salvaRisposte(v.id, r, calcolaEsito(REGOLE!, r, 'deployer'), REGOLE!.meta.versione);
   }
   return { repo, s, v };
 }
@@ -125,6 +135,60 @@ describe('EsitoValutazione', () => {
     expect(v?.notaModifica).toBe('Solo uso interno');
   });
 
+  it('classe modificata dal consulente: titolo con la classe scelta, classe calcolata e avviso', async () => {
+    const { repo, s } = await preparato({ ar3_occupazione: 'si' });
+    renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole('button', { name: 'Modifica classificazione' }));
+    await u.selectOptions(screen.getByLabelText('Classe'), 'minimo');
+    await u.type(screen.getByLabelText('Motivo della modifica'), 'Solo uso interno');
+    await u.click(screen.getByRole('button', { name: 'Salva modifica' }));
+    await screen.findByText(/^Confermata il /);
+    const titolo = document.querySelector('.esito-classe');
+    expect(titolo).toHaveTextContent(/^Rischio minimo$/);
+    expect(screen.getByText('Classe calcolata: Alto rischio')).toBeInTheDocument();
+    expect(
+      screen.getByText('Classificazione modificata dal consulente: gli obblighi elencati si riferiscono alla classe calcolata.'),
+    ).toBeInTheDocument();
+  });
+
+  it('classe confermata uguale alla calcolata: nessun avviso di modifica', async () => {
+    const { repo, s } = await preparato({ ar3_occupazione: 'si' });
+    renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole('button', { name: 'Conferma classificazione' }));
+    await screen.findByText(/^Confermata il /);
+    expect(document.querySelector('.esito-classe')).toHaveTextContent(/^Alto rischio$/);
+    expect(screen.queryByText(/^Classe calcolata:/)).toBeNull();
+    expect(screen.queryByText(/^Classificazione modificata dal consulente/)).toBeNull();
+  });
+
+  it('Torna al questionario nell\'intestazione sia per completata sia per confermata', async () => {
+    const { repo, s, v } = await preparato({ ar3_occupazione: 'si' });
+    const { unmount } = renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
+    expect(await screen.findByRole('link', { name: 'Torna al questionario' })).toHaveAttribute('href', `/sistemi/${s.id}/valutazione`);
+    unmount();
+    await repo.confermaValutazione(v.id, 'alto_rischio', null);
+    renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
+    expect(await screen.findByText(/^Confermata il /)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Torna al questionario' })).toHaveAttribute('href', `/sistemi/${s.id}/valutazione`);
+  });
+
+  it('modificare una risposta di una valutazione confermata la riporta a completata', async () => {
+    const { repo, s, v } = await preparato({ ar3_occupazione: 'si' });
+    await repo.confermaValutazione(v.id, 'alto_rischio', null);
+    renderizza(rotteConQuestionario(), repo, `/sistemi/${s.id}/valutazione/esito`);
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole('link', { name: 'Torna al questionario' }));
+    const gruppo = await screen.findByRole('group', { name: /sistema di IA/ });
+    await u.click(within(gruppo).getByRole('radio', { name: 'No' }));
+    await u.click(await screen.findByRole('button', { name: "Vai all'esito" }));
+    expect(await screen.findByRole('button', { name: 'Conferma classificazione' })).toBeInTheDocument();
+    expect(screen.queryByText(/^Confermata il /)).toBeNull();
+    const dopo = await repo.getValutazioneAttiva(s.id);
+    expect(dopo).toMatchObject({ stato: 'completata', classeConfermata: null, confermatoIl: null });
+  });
+
   it('Annulla chiude il modulo di modifica', async () => {
     const { repo, s } = await preparato({ ar3_occupazione: 'si' });
     renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
@@ -150,7 +214,7 @@ describe('EsitoValutazione', () => {
     const v = await repo.avviaValutazione(s.id, '1.0.0');
     const r = { ...BASE };
     const e = calcolaEsito(REGOLE!, r, s.ruoloCliente);
-    await repo.salvaRisposte(v.id, r, e);
+    await repo.salvaRisposte(v.id, r, e, REGOLE!.meta.versione);
     renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
     await screen.findByRole('heading', { name: 'Obblighi' });
     expect(e.ruoloEffettivo).toBe('da_definire');

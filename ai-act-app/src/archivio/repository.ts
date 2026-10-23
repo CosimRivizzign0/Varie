@@ -44,7 +44,8 @@ export interface Repository {
   getValutazioneAttiva(sistemaId: string): Promise<Valutazione | null>;
   elencaValutazioni(sistemaId: string): Promise<Valutazione[]>;
   avviaValutazione(sistemaId: string, versioneRegole: string): Promise<Valutazione>;
-  salvaRisposte(id: string, risposte: Risposte, esito: EsitoValutazione): Promise<Valutazione>;
+  /** Salva risposte ed esito ricalcolato; aggiorna versione_regole alla versione con cui è stato calcolato l'esito. */
+  salvaRisposte(id: string, risposte: Risposte, esito: EsitoValutazione, versioneRegole: string): Promise<Valutazione>;
   confermaValutazione(id: string, classe: Classe, nota: string | null): Promise<Valutazione>;
 }
 
@@ -488,16 +489,16 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
       return (await leggiValutazione(id)) as Valutazione;
     },
 
-    async salvaRisposte(id, risposte, esito) {
+    async salvaRisposte(id, risposte, esito, versioneRegole) {
       const { v, s } = await valutazioneModificabile(id);
       const t = ora().toISOString();
       const stato = esito.completo ? 'completata' : 'in_corso';
       const istruzioni: Istruzione[] = [
         {
-          sql: `UPDATE valutazioni SET risposte = ?, esito = ?, stato = ?, classe_confermata = NULL,
-                  nota_modifica = NULL, confermato_il = NULL, modificato_il = ?
+          sql: `UPDATE valutazioni SET risposte = ?, esito = ?, stato = ?, versione_regole = ?,
+                  classe_confermata = NULL, nota_modifica = NULL, confermato_il = NULL, modificato_il = ?
                 WHERE id = ?`,
-          params: [JSON.stringify(risposte), JSON.stringify(esito), stato, t, id],
+          params: [JSON.stringify(risposte), JSON.stringify(esito), stato, versioneRegole, t, id],
         },
       ];
       if (v.stato === 'in_corso' && stato === 'completata') {

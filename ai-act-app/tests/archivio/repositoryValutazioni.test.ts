@@ -71,29 +71,29 @@ describe('repository valutazioni', () => {
   it('salvaRisposte: completo → completata con attività; incompleto → in_corso senza attività', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
     const prima = (await repo.elencaAttivita(cid)).length;
-    const p = await repo.salvaRisposte(v.id, { a: 'si' }, esito({ completo: false }));
+    const p = await repo.salvaRisposte(v.id, { a: 'si' }, esito({ completo: false }), '1.0.0');
     expect(p.stato).toBe('in_corso');
     expect(p.risposte).toEqual({ a: 'si' });
     expect((await repo.elencaAttivita(cid)).length).toBe(prima);
-    const c = await repo.salvaRisposte(v.id, { a: 'si', b: 'no' }, esito({ classe: 'alto_rischio' }));
+    const c = await repo.salvaRisposte(v.id, { a: 'si', b: 'no' }, esito({ classe: 'alto_rischio' }), '1.0.0');
     expect(c.stato).toBe('completata');
     expect((await repo.elencaAttivita(cid))[0].descrizione).toBe('Valutazione di «Chatbot» completata: Alto rischio');
     // ancora completata: nessuna nuova attività
     const dopo = (await repo.elencaAttivita(cid)).length;
-    await repo.salvaRisposte(v.id, { a: 'si', b: 'si' }, esito({ classe: 'alto_rischio' }));
+    await repo.salvaRisposte(v.id, { a: 'si', b: 'si' }, esito({ classe: 'alto_rischio' }), '1.0.0');
     expect((await repo.elencaAttivita(cid)).length).toBe(dopo);
   });
 
   it('esito con caratteri speciali riletto identico', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
     const e = esito();
-    await repo.salvaRisposte(v.id, { a: 'si' }, e);
+    await repo.salvaRisposte(v.id, { a: 'si' }, e, '1.0.0');
     expect((await repo.getValutazioneAttiva(sid))?.esito).toEqual(e);
   });
 
   it('conferma con stessa classe e nota null → confermata', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
-    await repo.salvaRisposte(v.id, { a: 'si' }, esito());
+    await repo.salvaRisposte(v.id, { a: 'si' }, esito(), '1.0.0');
     const c = await repo.confermaValutazione(v.id, 'minimo', null);
     expect(c).toMatchObject({ stato: 'confermata', classeConfermata: 'minimo', notaModifica: null, confermatoIl: adesso.toISOString() });
     expect((await repo.elencaAttivita(cid))[0].descrizione).toBe('Classificazione di «Chatbot» confermata: Rischio minimo');
@@ -101,14 +101,14 @@ describe('repository valutazioni', () => {
 
   it('conferma con stessa classe e nota → nota salvata (trim)', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
-    await repo.salvaRisposte(v.id, { a: 'si' }, esito());
+    await repo.salvaRisposte(v.id, { a: 'si' }, esito(), '1.0.0');
     const c = await repo.confermaValutazione(v.id, 'minimo', '  ok  ');
     expect(c.notaModifica).toBe('ok');
   });
 
   it('conferma con classe diversa richiede nota', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
-    await repo.salvaRisposte(v.id, { a: 'si' }, esito());
+    await repo.salvaRisposte(v.id, { a: 'si' }, esito(), '1.0.0');
     for (const nota of ['', '   ', null]) {
       const err = await repo.confermaValutazione(v.id, 'alto_rischio', nota).catch((e) => e);
       expect(err).toBeInstanceOf(ErroreValidazione);
@@ -124,29 +124,36 @@ describe('repository valutazioni', () => {
   it('conferma su in_corso → ErroreValutazioneIncompleta', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
     await expect(repo.confermaValutazione(v.id, 'minimo', null)).rejects.toBeInstanceOf(ErroreValutazioneIncompleta);
-    await repo.salvaRisposte(v.id, { a: 'si' }, esito({ completo: false }));
+    await repo.salvaRisposte(v.id, { a: 'si' }, esito({ completo: false }), '1.0.0');
     await expect(repo.confermaValutazione(v.id, 'minimo', null)).rejects.toThrow('Completa il questionario prima di confermare');
   });
 
   it('salvaRisposte su confermata → completata e azzera la conferma', async () => {
     const v = await repo.avviaValutazione(sid, '1.0.0');
-    await repo.salvaRisposte(v.id, { a: 'si' }, esito());
+    await repo.salvaRisposte(v.id, { a: 'si' }, esito(), '1.0.0');
     await repo.confermaValutazione(v.id, 'alto_rischio', 'motivo');
-    const r = await repo.salvaRisposte(v.id, { a: 'no' }, esito());
+    const r = await repo.salvaRisposte(v.id, { a: 'no' }, esito(), '1.0.0');
     expect(r).toMatchObject({ stato: 'completata', classeConfermata: null, notaModifica: null, confermatoIl: null });
   });
 
+  it('salvaRisposte aggiorna versione_regole alla versione indicata', async () => {
+    const v = await repo.avviaValutazione(sid, '0.9.0');
+    const r = await repo.salvaRisposte(v.id, { a: 'si' }, esito(), '1.1.0');
+    expect(r.versioneRegole).toBe('1.1.0');
+    expect((await repo.getValutazioneAttiva(sid))?.versioneRegole).toBe('1.1.0');
+  });
+
   it('id mancante o sostituita o sistema nel cestino → ErroreNonTrovato', async () => {
-    await expect(repo.salvaRisposte('zz', {}, esito())).rejects.toBeInstanceOf(ErroreNonTrovato);
+    await expect(repo.salvaRisposte('zz', {}, esito(), '1.0.0')).rejects.toBeInstanceOf(ErroreNonTrovato);
     await expect(repo.confermaValutazione('zz', 'minimo', null)).rejects.toBeInstanceOf(ErroreNonTrovato);
     const a = await repo.avviaValutazione(sid, '1');
-    await repo.salvaRisposte(a.id, { a: 'si' }, esito());
+    await repo.salvaRisposte(a.id, { a: 'si' }, esito(), '1.0.0');
     await repo.avviaValutazione(sid, '1');
-    await expect(repo.salvaRisposte(a.id, {}, esito())).rejects.toBeInstanceOf(ErroreNonTrovato);
+    await expect(repo.salvaRisposte(a.id, {}, esito(), '1.0.0')).rejects.toBeInstanceOf(ErroreNonTrovato);
     await expect(repo.confermaValutazione(a.id, 'minimo', null)).rejects.toBeInstanceOf(ErroreNonTrovato);
     const b = (await repo.getValutazioneAttiva(sid))!;
     await repo.eliminaSistema(sid);
-    await expect(repo.salvaRisposte(b.id, {}, esito())).rejects.toBeInstanceOf(ErroreNonTrovato);
+    await expect(repo.salvaRisposte(b.id, {}, esito(), '1.0.0')).rejects.toBeInstanceOf(ErroreNonTrovato);
     await expect(repo.confermaValutazione(b.id, 'minimo', null)).rejects.toBeInstanceOf(ErroreNonTrovato);
   });
 

@@ -63,26 +63,27 @@ test('valutazione: screening CV (deployer) → Alto rischio → conferma → roa
   await expect(page.getByRole('heading', { name: 'Valutazione AI Act' })).toBeVisible();
 
   const vaiAllEsito = page.getByRole('button', { name: "Vai all'esito" });
+  // Gruppi visibili senza alcuna risposta selezionata (una risposta può rivelare nuove domande).
+  const senzaRisposta = page.locator('fieldset.domanda').filter({ hasNot: page.locator('input[type="radio"]:checked') });
   for (let pagina = 0; pagina < 10; pagina++) {
-    // Risponde a tutte le domande visibili della sezione (le visibili possono cambiare dopo una risposta).
-    // Ripete finché non restano gruppi senza risposta.
-    for (let giro = 0; giro < 5; giro++) {
-      const gruppi = page.locator('fieldset.domanda');
-      const totale = await gruppi.count();
-      for (let i = 0; i < totale; i++) {
-        const gruppo = gruppi.nth(i);
-        const testo = (await gruppo.locator('legend').textContent()) ?? '';
-        // Caso 3: è un sistema di IA (Sì) usato per selezionare personale (Sì); tutto il resto No.
-        const si = testo.startsWith('Il sistema è un sistema di IA') || testo.startsWith('Il sistema è usato per selezionare personale');
-        await gruppo.getByLabel(si ? 'Sì' : 'No', { exact: true }).check();
-      }
-      if ((await page.locator('fieldset.domanda').count()) === totale) break;
+    // Risponde finché nella sezione non resta nessuna domanda visibile senza risposta.
+    for (let giro = 0; giro < 40 && (await senzaRisposta.count()) > 0; giro++) {
+      const gruppo = senzaRisposta.first();
+      const testo = (await gruppo.locator('legend').textContent()) ?? '';
+      // Caso 3: è un sistema di IA (Sì) usato per selezionare personale (Sì); tutto il resto No.
+      const si = testo.startsWith('Il sistema è un sistema di IA') || testo.startsWith('Il sistema è usato per selezionare personale');
+      // Locator stabile (per nome della domanda): il gruppo esce da «senzaRisposta» appena risposto.
+      const nome = await gruppo.locator('input[type="radio"]').first().getAttribute('name');
+      const scelta = page.locator(`input[type="radio"][name="${nome}"][value="${si ? 'si' : 'no'}"]`);
+      await scelta.check();
+      await expect(scelta).toBeChecked();
     }
+    await expect(senzaRisposta).toHaveCount(0);
     if (await vaiAllEsito.isVisible()) break;
     await page.getByRole('button', { name: 'Avanti' }).click();
   }
-  // Attende che tutte le risposte visibili siano salvate (n/n) prima di passare all'esito.
-  await expect(page.locator('.avanzamento span')).toHaveText(/^(\d+)\/\1$/);
+  // Nessuna attesa sul salvataggio: «Vai all'esito» attende da sé i salvataggi in sospeso.
+  await expect(vaiAllEsito).toBeVisible();
   await vaiAllEsito.click();
 
   await expect(page.getByText('Alto rischio', { exact: true }).first()).toBeVisible();

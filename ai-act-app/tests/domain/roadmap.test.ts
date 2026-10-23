@@ -163,6 +163,16 @@ describe('calcolaRoadmap', () => {
       expect(r.percentuale).toBe(20);
     });
 
+    it('un solo sistema usa il singolare nei dettagli', () => {
+      const l = sis(['A']);
+      const zero = calcolaRoadmap(conf, l, oggi, sint(l, [null]));
+      expect(zero.tappe[2].dettaglio).toBe('0 di 1 sistema');
+      expect(zero.tappe[3].dettaglio).toBe('0 di 1 confermato');
+      const uno = calcolaRoadmap(conf, l, oggi, sint(l, ['confermata']));
+      expect(uno.tappe[2].dettaglio).toBe('1 di 1 sistema');
+      expect(uno.tappe[3].dettaglio).toBe('1 di 1 confermato');
+    });
+
     it('tappe 3-4 indipendenti da 1-2 ma la prossima azione segue la priorità', () => {
       const l = sis(['A']);
       const r = calcolaRoadmap(cliente, l, oggi, sint(l, ['confermata']));

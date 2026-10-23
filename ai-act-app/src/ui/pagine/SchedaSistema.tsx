@@ -7,6 +7,8 @@ import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
 import { conferma } from '../conferma';
 import { RiquadroValutazione } from '../componenti/RiquadroValutazione';
+import { ERRORE_REGOLE, REGOLE } from '../../regole/attive';
+import { calcolaEsito } from '../../regole/motore';
 
 interface Valori {
   nome: string;
@@ -56,6 +58,8 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
   const [salvataggio, setSalvataggio] = useState(false);
   const inCorso = useRef(false);
   const [avviso, setAvviso] = useState<string | null>(null);
+  // Ruolo salvato in archivio: se cambia, l'esito della valutazione attiva va ricalcolato.
+  const ruoloSalvato = useRef<RuoloCliente | null>(null);
 
   useEffect(() => {
     let attivo = true;
@@ -69,7 +73,10 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
             return;
           }
           cid = s.clienteId;
-          if (attivo) setValori(daSistema(s));
+          if (attivo) {
+            setValori(daSistema(s));
+            ruoloSalvato.current = s.ruoloCliente;
+          }
         }
         const c = cid ? await repo.getCliente(cid) : null;
         if (attivo) {
@@ -118,8 +125,13 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
     setSalvataggio(true);
     setAvviso(null);
     try {
-      if (id) await repo.aggiornaSistema(id, input(valori));
-      else await repo.creaSistema(cliente.id, input(valori));
+      if (id) {
+        const aggiornato = await repo.aggiornaSistema(id, input(valori));
+        if (aggiornato.ruoloCliente !== ruoloSalvato.current) {
+          ruoloSalvato.current = aggiornato.ruoloCliente;
+          await ricalcolaValutazione(id, aggiornato.ruoloCliente);
+        }
+      } else await repo.creaSistema(cliente.id, input(valori));
       vaiAlCliente();
       return;
     } catch (err) {
@@ -130,6 +142,14 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
       inCorso.current = false;
       setSalvataggio(false);
     }
+  }
+
+  // Obblighi e ruolo effettivo dipendono dal ruolo del cliente: si ricalcola l'esito (la conferma si azzera).
+  async function ricalcolaValutazione(sistemaId: string, ruolo: RuoloCliente) {
+    if (ERRORE_REGOLE || !REGOLE) return;
+    const v = await repo.getValutazioneAttiva(sistemaId);
+    if (!v || !v.esito) return;
+    await repo.salvaRisposte(v.id, v.risposte, calcolaEsito(REGOLE, v.risposte, ruolo), REGOLE.meta.versione);
   }
 
   async function spostaNelCestino() {

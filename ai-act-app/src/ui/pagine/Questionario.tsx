@@ -31,9 +31,12 @@ function Contenuto({ id }: { id: string }) {
   // Coda di salvataggio: si salva sempre l'ultimo stato, in sequenza.
   const ultime = useRef<Risposte>({});
   const sporco = useRef(false);
-  const inVolo = useRef(false);
+  // Svuotamento in corso: chi lo richiede mentre è in volo riceve la stessa promessa (true = tutto salvato).
+  const inVolo = useRef<Promise<boolean> | null>(null);
   const attivo = useRef(true);
   const ultimaSalvata = useRef<Valutazione | null>(null);
+  const uscita = useRef(false);
+  const [inUscita, setInUscita] = useState(false);
 
   useEffect(() => {
     attivo.current = true;
@@ -88,35 +91,55 @@ function Contenuto({ id }: { id: string }) {
   const valutazioneId = valutazione.id;
   const ruolo = sistema.ruoloCliente;
 
-  async function svuotaCoda() {
-    if (inVolo.current) return;
-    inVolo.current = true;
-    try {
-      while (sporco.current) {
-        sporco.current = false;
-        const istantanea = ultime.current;
-        const esito = calcolaEsito(regole, istantanea, ruolo);
-        try {
-          const v = await repo.salvaRisposte(valutazioneId, istantanea, esito);
-          ultimaSalvata.current = v;
-          if (attivo.current) {
-            setValutazione(v);
-            setErrore(null);
-          }
-        } catch (err) {
+  function svuotaCoda(): Promise<boolean> {
+    if (inVolo.current) return inVolo.current;
+    const giro = (async () => {
+      let ok = true;
+      try {
+        // Ripete finché arrivano nuove risposte durante il salvataggio: si salva sempre l'ultimo stato.
+        while (sporco.current) {
           sporco.current = false;
-          if (attivo.current) {
-            setErrore((err as Error).message);
-            if (ultimaSalvata.current) {
-              ultime.current = ultimaSalvata.current.risposte;
-              setRisposte(ultimaSalvata.current.risposte);
+          const istantanea = ultime.current;
+          const esito = calcolaEsito(regole, istantanea, ruolo);
+          try {
+            const v = await repo.salvaRisposte(valutazioneId, istantanea, esito, regole.meta.versione);
+            ultimaSalvata.current = v;
+            ok = true;
+            if (attivo.current) {
+              setValutazione(v);
+              setErrore(null);
+            }
+          } catch (err) {
+            ok = false;
+            sporco.current = false;
+            if (attivo.current) {
+              setErrore((err as Error).message);
+              if (ultimaSalvata.current) {
+                ultime.current = ultimaSalvata.current.risposte;
+                setRisposte(ultimaSalvata.current.risposte);
+              }
             }
           }
         }
+      } finally {
+        inVolo.current = null;
       }
-    } finally {
-      inVolo.current = false;
-    }
+      return ok;
+    })();
+    inVolo.current = giro;
+    return giro;
+  }
+
+  async function vaiAllEsito() {
+    if (uscita.current) return;
+    uscita.current = true;
+    setInUscita(true);
+    // Attende i salvataggi in sospeso: la pagina dell'esito legge la valutazione dall'archivio.
+    const ok = await svuotaCoda();
+    if (!attivo.current) return;
+    uscita.current = false;
+    setInUscita(false);
+    if (ok) navigate(`/sistemi/${id}/valutazione/esito`);
   }
 
   function rispondi(domandaId: string, valore: Risposta) {
@@ -179,7 +202,8 @@ function Contenuto({ id }: { id: string }) {
           <button
             type="button"
             className="pulsante pulsante-primario"
-            onClick={() => navigate(`/sistemi/${id}/valutazione/esito`)}
+            disabled={inUscita}
+            onClick={() => void vaiAllEsito()}
           >
             Vai all'esito
           </button>

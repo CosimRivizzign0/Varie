@@ -60,8 +60,8 @@ export function calcolaRoadmap(
   const tappe: Tappa[] = [
     { id: 'anagrafica', etichetta: 'Anagrafica', stato: 'da_fare', dettaglio: null },
     { id: 'inventario', etichetta: 'Inventario', stato: 'da_fare', dettaglio: sistemiTesto(n) },
-    { id: 'questionario', etichetta: 'Questionario', stato: 'da_fare', dettaglio: `${valutati.length} di ${n} sistemi` },
-    { id: 'classificazione', etichetta: 'Classificazione', stato: 'da_fare', dettaglio: `${confermati.length} di ${n} confermati` },
+    { id: 'questionario', etichetta: 'Questionario', stato: 'da_fare', dettaglio: `${valutati.length} di ${n} ${n === 1 ? 'sistema' : 'sistemi'}` },
+    { id: 'classificazione', etichetta: 'Classificazione', stato: 'da_fare', dettaglio: `${confermati.length} di ${n} ${n === 1 ? 'confermato' : 'confermati'}` },
     { id: 'report', etichetta: 'Report', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2b' },
   ];
 
