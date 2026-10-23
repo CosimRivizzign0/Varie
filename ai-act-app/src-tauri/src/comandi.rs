@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use ai_act_store::{ultimo_backup, ultimo_backup_escludendo, Istruzione, Store};
+use ai_act_store::{Istruzione, Store};
 use serde::Serialize;
 use serde_json::{Map, Value};
 use tauri::State;
@@ -63,14 +63,11 @@ pub async fn ripristina_backup(stato: State<'_, Stato>, sorgente: PathBuf) -> Re
 #[tauri::command]
 pub async fn ripristina_ultimo_backup(stato: State<'_, Stato>) -> Result<(), String> {
     let mut esclusi = esclusi(&stato)?;
-    let sorgente = ultimo_backup_escludendo(&stato.dir_backup, &esclusi)
-        .ok_or_else(|| "Nessun backup disponibile.".to_string())?;
-    stato.store.ripristina(&sorgente, &stato.dir_backup)?;
+    // I backup non validi vengono saltati (e aggiunti a `esclusi`) dallo store.
+    let (sorgente, copia) = stato.store.ripristina_ultimo(&stato.dir_backup, &mut esclusi)?;
     // La copia appena creata è del database che non si apriva; se anche `sorgente`
     // fallisce, il prossimo tentativo passa al backup precedente.
-    if let Some(copia) = ultimo_backup(&stato.dir_backup) {
-        esclusi.push(copia);
-    }
+    esclusi.push(copia);
     esclusi.push(sorgente);
     Ok(())
 }

@@ -12,8 +12,17 @@ pub type Result<T> = std::result::Result<T, String>;
 
 pub const NON_DISPONIBILE: &str = "Database non disponibile: riavviare l'app";
 
-/// Numero di backup `ai-act-*.db` conservati nella cartella dei backup.
+/// Numero di backup `ai-act-*.db` conservati nella cartella dei backup
+/// (e, separatamente, di copie grezze `danneggiato-ai-act-*.db`).
 pub const BACKUP_CONSERVATI: usize = 10;
+
+/// Prefisso dei backup ripristinabili.
+const PREFISSO_BACKUP: &str = "ai-act-";
+/// Prefisso delle copie grezze di un database danneggiato: conservate per sicurezza,
+/// ma mai proposte da [`ultimo_backup`] né contate nella rotazione dei backup.
+const PREFISSO_DANNEGGIATO: &str = "danneggiato-ai-act-";
+
+const NESSUN_BACKUP: &str = "Nessun backup disponibile.";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Istruzione {
@@ -107,7 +116,7 @@ fn vacuum_in(conn: &Connection, percorso_db: &Path, dest: &Path) -> Result<()> {
     esito
 }
 
-fn nomi_backup(dir: &Path) -> Vec<String> {
+fn nomi_con_prefisso(dir: &Path, prefisso: &str) -> Vec<String> {
     let Ok(voci) = std::fs::read_dir(dir) else {
         return Vec::new();
     };
@@ -115,10 +124,14 @@ fn nomi_backup(dir: &Path) -> Vec<String> {
         .filter_map(|v| v.ok())
         .filter(|v| v.file_type().map(|t| t.is_file()).unwrap_or(false))
         .filter_map(|v| v.file_name().into_string().ok())
-        .filter(|n| n.starts_with("ai-act-") && n.ends_with(".db"))
+        .filter(|n| n.starts_with(prefisso) && n.ends_with(".db"))
         .collect();
     nomi.sort();
     nomi
+}
+
+fn nomi_backup(dir: &Path) -> Vec<String> {
+    nomi_con_prefisso(dir, PREFISSO_BACKUP)
 }
 
 /// Copia byte per byte di `percorso_db` in `dest` (file temporaneo e poi rinomina):
@@ -147,15 +160,21 @@ fn ora_locale() -> Result<String> {
 }
 
 fn backup_ruotato(conn: &Connection, percorso_db: &Path, dir: &Path, ora: &str) -> Result<PathBuf> {
-    ruotato_con(dir, ora, |dest| vacuum_in(conn, percorso_db, dest))
+    ruotato_con(dir, PREFISSO_BACKUP, ora, |dest| vacuum_in(conn, percorso_db, dest))
 }
 
-/// Crea `ai-act-<ora>.db` in `dir` con `scrivi`, poi conserva solo i 10 backup più recenti.
-fn ruotato_con(dir: &Path, ora: &str, scrivi: impl FnOnce(&Path) -> Result<()>) -> Result<PathBuf> {
+/// Crea `<prefisso><ora>.db` in `dir` con `scrivi`, poi conserva solo i 10 file più
+/// recenti con lo stesso prefisso.
+fn ruotato_con(
+    dir: &Path,
+    prefisso: &str,
+    ora: &str,
+    scrivi: impl FnOnce(&Path) -> Result<()>,
+) -> Result<PathBuf> {
     std::fs::create_dir_all(dir).map_err(errore)?;
-    let dest = dir.join(format!("ai-act-{ora}.db"));
+    let dest = dir.join(format!("{prefisso}{ora}.db"));
     scrivi(&dest)?;
-    let nomi = nomi_backup(dir);
+    let nomi = nomi_con_prefisso(dir, prefisso);
     let eccedenti = nomi.len().saturating_sub(BACKUP_CONSERVATI);
     for nome in &nomi[..eccedenti] {
         std::fs::remove_file(dir.join(nome)).map_err(errore)?;
@@ -248,16 +267,43 @@ impl Store {
     }
 
     /// Sostituisce il database con `sorgente` dopo averne verificato l'integrità e
-    /// aver salvato un backup del database corrente in `dir_backup`.
-    pub fn ripristina(&self, sorgente: &Path, dir_backup: &Path) -> Result<()> {
+    /// aver salvato una copia del database corrente in `dir_backup`.
+    /// Restituisce il percorso di quella copia.
+    pub fn ripristina(&self, sorgente: &Path, dir_backup: &Path) -> Result<PathBuf> {
+        let tmp = self.prepara_sorgente(sorgente)?;
+        let esito = self.sostituisci_con(&tmp, dir_backup);
+        let _ = std::fs::remove_file(&tmp);
+        esito
+    }
+
+    /// Ripristina il backup più recente di `dir_backup` non presente in `esclusi`.
+    /// I candidati che non sono database validi vengono aggiunti a `esclusi` e si
+    /// passa al precedente. Restituisce il backup ripristinato e la copia di sicurezza.
+    pub fn ripristina_ultimo(&self, dir_backup: &Path, esclusi: &mut Vec<PathBuf>) -> Result<(PathBuf, PathBuf)> {
+        loop {
+            let sorgente = ultimo_backup_escludendo(dir_backup, esclusi).ok_or_else(|| NESSUN_BACKUP.to_string())?;
+            let tmp = match self.prepara_sorgente(&sorgente) {
+                Ok(tmp) => tmp,
+                Err(_) => {
+                    esclusi.push(sorgente);
+                    continue;
+                }
+            };
+            let esito = self.sostituisci_con(&tmp, dir_backup);
+            let _ = std::fs::remove_file(&tmp);
+            return esito.map(|copia| (sorgente, copia));
+        }
+    }
+
+    /// Copia `sorgente` accanto al database e ne verifica l'integrità. Va fatto prima
+    /// della rotazione dei backup, che potrebbe eliminarla se è il più vecchio.
+    fn prepara_sorgente(&self, sorgente: &Path) -> Result<PathBuf> {
         let nome = self
             .percorso
             .file_name()
             .ok_or_else(|| "Percorso del database non valido".to_string())?
             .to_string_lossy();
         let tmp = self.percorso.with_file_name(format!(".{nome}.ripristino"));
-        // Prima si copia e verifica la sorgente: la rotazione del backup qui sotto
-        // potrebbe eliminarla, se è il backup più vecchio della cartella.
         let copia = std::fs::copy(sorgente, &tmp)
             .map_err(errore)
             .and_then(|_| verifica_integrita(&tmp));
@@ -265,23 +311,25 @@ impl Store {
             let _ = std::fs::remove_file(&tmp);
             return Err(e);
         }
-        let esito = self.sostituisci_con(&tmp, dir_backup);
-        let _ = std::fs::remove_file(&tmp);
-        esito
+        Ok(tmp)
     }
 
-    fn sostituisci_con(&self, tmp: &Path, dir_backup: &Path) -> Result<()> {
+    fn sostituisci_con(&self, tmp: &Path, dir_backup: &Path) -> Result<PathBuf> {
         let mut guardia = self.guardia()?;
         let conn = attiva(&mut guardia)?;
         let ora = ora_locale()?;
-        if let Err(e_vacuum) = backup_ruotato(conn, &self.percorso, dir_backup, &ora) {
+        let copia = match backup_ruotato(conn, &self.percorso, dir_backup, &ora) {
+            Ok(copia) => copia,
             // Database corrente danneggiato ("file is not a database"): VACUUM INTO non
             // può leggerlo, ma il ripristino deve comunque poter procedere. Se ne
-            // conserva una copia grezza con lo stesso nome e la stessa rotazione.
-            ruotato_con(dir_backup, &ora, |dest| copia_grezza(&self.percorso, dest)).map_err(|e| {
+            // conserva una copia grezza, con un nome che non la rende ripristinabile.
+            Err(e_vacuum) => ruotato_con(dir_backup, PREFISSO_DANNEGGIATO, &ora, |dest| {
+                copia_grezza(&self.percorso, dest)
+            })
+            .map_err(|e| {
                 format!("Impossibile salvare una copia del database corrente prima del ripristino: {e_vacuum}; {e}")
-            })?;
-        }
+            })?,
+        };
 
         // Chiude la connessione corrente prima di sostituire il file.
         if let Some(vecchia) = guardia.take() {
@@ -296,7 +344,7 @@ impl Store {
         let riaperta = apri_connessione(&self.percorso)
             .map_err(|e| format!("{NON_DISPONIBILE} ({e})"))?;
         *guardia = Some(riaperta);
-        sostituzione
+        sostituzione.map(|_| copia)
     }
 }
 
@@ -524,13 +572,114 @@ mod test {
         assert!(store.select("SELECT * FROM t", &[]).is_err());
 
         let dir_backup = dir.path().join("backup");
-        store.ripristina(&valido, &dir_backup).unwrap();
+        let copia = store.ripristina(&valido, &dir_backup).unwrap();
         assert_eq!(testi(&store), vec!["dal backup"]);
         let backup = file_backup(&dir_backup);
         assert_eq!(backup.len(), 1);
-        assert!(backup[0].starts_with("ai-act-") && backup[0].ends_with(".db"));
-        assert_eq!(std::fs::read(dir_backup.join(&backup[0])).unwrap(), spazzatura);
-        assert_eq!(ultimo_backup(&dir_backup), Some(dir_backup.join(&backup[0])));
+        assert!(backup[0].starts_with("danneggiato-ai-act-") && backup[0].ends_with(".db"));
+        assert_eq!(copia, dir_backup.join(&backup[0]));
+        assert_eq!(std::fs::read(&copia).unwrap(), spazzatura);
+        // La copia grezza non è un backup ripristinabile.
+        assert_eq!(ultimo_backup(&dir_backup), None);
+    }
+
+    /// Database corrente fatto di byte senza senso; `Store::apri` lo accetta.
+    fn store_danneggiato(dir: &TempDir) -> Store {
+        let percorso = dir.path().join("ai-act.db");
+        std::fs::write(&percorso, b"questo file non e' un database SQLite ".repeat(200)).unwrap();
+        Store::apri(&percorso).unwrap()
+    }
+
+    /// Backup valido `ai-act-<ora>.db` in `dir_backup` che contiene la riga `testo`.
+    fn backup_valido(dir_backup: &Path, ora: &str, testo: &str) -> PathBuf {
+        let tmp = TempDir::new().unwrap();
+        let store = store_con_tabella(&tmp);
+        store
+            .batch(&[ist("INSERT INTO t (testo) VALUES (?)", vec![json!(testo)])])
+            .unwrap();
+        store.backup_avvio(dir_backup, ora).unwrap()
+    }
+
+    #[test]
+    fn ripristina_ultimo_salta_i_backup_non_validi_e_li_esclude() {
+        let dir = TempDir::new().unwrap();
+        let store = store_danneggiato(&dir);
+        let dir_backup = dir.path().join("backup");
+        let valido = backup_valido(&dir_backup, "20261020-090000", "buono");
+        let rotto = dir_backup.join("ai-act-20261022-090000.db");
+        std::fs::write(&rotto, "non un database").unwrap();
+
+        let mut esclusi = Vec::new();
+        let (sorgente, copia) = store.ripristina_ultimo(&dir_backup, &mut esclusi).unwrap();
+        assert_eq!(sorgente, valido);
+        assert_eq!(testi(&store), vec!["buono"]);
+        assert_eq!(esclusi, vec![rotto]);
+        assert!(copia.file_name().unwrap().to_string_lossy().starts_with("danneggiato-ai-act-"));
+    }
+
+    #[test]
+    fn ripristina_ultimo_senza_backup_validi_restituisce_nessun_backup_disponibile() {
+        let dir = TempDir::new().unwrap();
+        let store = store_con_tabella(&dir);
+        store
+            .batch(&[ist("INSERT INTO t (testo) VALUES (?)", vec![json!("originale")])])
+            .unwrap();
+        let dir_backup = dir.path().join("backup");
+        std::fs::create_dir_all(&dir_backup).unwrap();
+        let rotto = dir_backup.join("ai-act-20261022-090000.db");
+        std::fs::write(&rotto, "non un database").unwrap();
+
+        let mut esclusi = Vec::new();
+        let esito = store.ripristina_ultimo(&dir_backup, &mut esclusi).map(|_| ());
+        assert_eq!(esito, Err("Nessun backup disponibile.".to_string()));
+        assert_eq!(esclusi, vec![rotto]);
+        assert_eq!(testi(&store), vec!["originale"]);
+        // Nessuna copia di sicurezza: il database corrente non è stato toccato.
+        assert_eq!(file_backup(&dir_backup), vec!["ai-act-20261022-090000.db"]);
+    }
+
+    #[test]
+    fn dopo_un_ripristino_da_db_danneggiato_il_riavvio_non_ripropone_la_copia_grezza() {
+        // Scenario della trappola: DB danneggiato, si ripristina il backup più recente,
+        // poi l'app viene riavviata (esclusi vuoti) e si riprova "ultimo backup".
+        let dir = TempDir::new().unwrap();
+        let store = store_danneggiato(&dir);
+        let dir_backup = dir.path().join("backup");
+        let vecchio = backup_valido(&dir_backup, "20261020-090000", "vecchio");
+        let recente = backup_valido(&dir_backup, "20261021-090000", "recente");
+
+        let mut esclusi = Vec::new();
+        let (sorgente, _) = store.ripristina_ultimo(&dir_backup, &mut esclusi).unwrap();
+        assert_eq!(sorgente, recente);
+
+        let mut dopo_riavvio = Vec::new();
+        let (sorgente, copia) = store.ripristina_ultimo(&dir_backup, &mut dopo_riavvio).unwrap();
+        // Il candidato più recente è la copia pre-ripristino di "recente" (valida),
+        // mai la copia grezza del database danneggiato.
+        assert!(sorgente.file_name().unwrap().to_string_lossy().starts_with("ai-act-"));
+        assert!(dopo_riavvio.is_empty());
+        assert_eq!(testi(&store), vec!["recente"]);
+        assert!(copia.exists());
+        assert!(vecchio.exists());
+    }
+
+    #[test]
+    fn le_copie_grezze_ruotano_separatamente_e_non_toccano_i_backup() {
+        let dir = TempDir::new().unwrap();
+        let dir_backup = dir.path().join("backup");
+        let valido = backup_valido(&dir_backup, "20000101-000000", "x");
+        for i in 0..12 {
+            let percorso = dir.path().join(format!("rotto{i}.db"));
+            std::fs::write(&percorso, "rotto").unwrap();
+            ruotato_con(&dir_backup, PREFISSO_DANNEGGIATO, &format!("20261023-1200{:02}", i), |dest| {
+                copia_grezza(&percorso, dest)
+            })
+            .unwrap();
+        }
+        let nomi = file_backup(&dir_backup);
+        assert_eq!(nomi.iter().filter(|n| n.starts_with("danneggiato-ai-act-")).count(), 10);
+        assert!(valido.exists());
+        assert_eq!(ultimo_backup(&dir_backup), Some(valido));
     }
 
     #[test]
