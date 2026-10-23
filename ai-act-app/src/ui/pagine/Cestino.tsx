@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ElementoCestino } from '../../archivio/repository';
 import { useRepository } from '../RepositoryContext';
+import { conferma } from '../conferma';
 
 const due = (n: number) => String(n).padStart(2, '0');
 function formattaData(iso: string): string {
@@ -39,9 +40,9 @@ export function Cestino() {
   const ripristina = (e: ElementoCestino) =>
     esegui(() => (e.tipo === 'cliente' ? repo.ripristinaCliente(e.id) : repo.ripristinaSistema(e.id)));
 
-  const eliminaDef = (e: ElementoCestino) => {
-    if (!window.confirm("Eliminare definitivamente? L'operazione non si può annullare.")) return;
-    return esegui(() => repo.eliminaDefinitivamente(e.tipo, e.id));
+  const eliminaDef = async (e: ElementoCestino) => {
+    if (!(await conferma("Eliminare definitivamente? L'operazione non si può annullare."))) return;
+    await esegui(() => repo.eliminaDefinitivamente(e.tipo, e.id));
   };
 
   return (

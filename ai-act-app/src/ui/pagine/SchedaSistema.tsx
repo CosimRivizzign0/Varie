@@ -5,6 +5,7 @@ import { RUOLI, type Cliente, type RuoloCliente, type SistemaAI } from '../../do
 import { ErroreValidazione } from '../../archivio/errori';
 import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
+import { conferma } from '../conferma';
 
 interface Valori {
   nome: string;
@@ -131,7 +132,8 @@ function Contenuto({ id, clienteIdRotta }: { id: string | undefined; clienteIdRo
   }
 
   async function spostaNelCestino() {
-    if (!id || !window.confirm('Spostare il sistema nel cestino?')) return;
+    if (!id) return;
+    if (!(await conferma('Spostare il sistema nel cestino?'))) return;
     try {
       await repo.eliminaSistema(id);
       vaiAlCliente();

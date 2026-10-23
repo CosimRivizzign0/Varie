@@ -17,17 +17,19 @@ Serve per verificare che l'app si installi e che i dati non vadano persi. Non se
 
 ## B. Provare i dati
 
-5. [ ] Crea un cliente reale (anche uno tuo): ragione sociale, partita IVA, ruolo.
+5. [ ] Crea un cliente reale (anche uno tuo): ragione sociale, partita IVA, settore, referente.
 6. [ ] Dentro quel cliente aggiungi un sistema di intelligenza artificiale.
 7. [ ] Chiudi completamente l'app e riaprila. **Il cliente e il sistema devono essere ancora presenti.**
+8. [ ] Crea un secondo sistema AI di prova e clicca **Sposta nel cestino**: **deve comparire una finestra di conferma.** Conferma.
+9. [ ] Apri il **Cestino**, clicca **Elimina definitivamente** sul sistema di prova e, nella finestra di conferma, clicca **Annulla**. **Il sistema deve essere ancora nel cestino.**
 
 ## C. Backup
 
-8. [ ] Controlla che nella cartella dei backup ci sia almeno un file:
+10. [ ] Controlla che nella cartella dei backup ci sia almeno un file:
    - Windows: `%APPDATA%\com.cosimorivizzigno.aiactassessment\backup` (incolla il percorso nella barra di Esplora file)
    - macOS: `~/Library/Application Support/com.cosimorivizzigno.aiactassessment/backup` (in Finder: **Vai → Vai alla cartella**, poi incolla il percorso)
-9. [ ] Nell'app clicca **Esporta backup** e salva il file sul **Desktop**.
-10. [ ] Clicca **Ripristina backup** e scegli il file appena salvato sul Desktop. I dati devono essere ancora tutti presenti.
+11. [ ] Nell'app clicca **Esporta backup** e salva il file sul **Desktop**.
+12. [ ] Clicca **Ripristina backup**, scegli il file appena salvato sul Desktop e conferma. Deve comparire «Backup ripristinato.» e i dati devono essere ancora tutti presenti, compreso il sistema di prova nel cestino.
 
 Consiglio: tieni attivata la cifratura del disco (BitLocker su Windows, FileVault su Mac), perché i dati dei clienti sono salvati sul computer.
 
