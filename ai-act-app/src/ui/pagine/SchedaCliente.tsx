@@ -7,6 +7,7 @@ import { ErroreValidazione } from '../../archivio/errori';
 import { useRepository } from '../RepositoryContext';
 import { Campo } from '../componenti/Campo';
 import { RoadmapBar } from '../componenti/RoadmapBar';
+import { conferma } from '../conferma';
 
 interface Valori {
   ragioneSociale: string;
@@ -69,7 +70,8 @@ function Contenuto({ id }: { id: string | undefined }) {
   const inCorso = useRef(false);
   const [avviso, setAvviso] = useState<string | null>(null);
 
-  const ricarica = useCallback(async () => {
+  /** Rilegge cliente, sistemi e log; `aggiornaModulo: false` lascia intatti i valori del modulo. */
+  const ricarica = useCallback(async ({ aggiornaModulo = true }: { aggiornaModulo?: boolean } = {}) => {
     if (!id) return;
     const c = await repo.getCliente(id);
     if (!c || c.eliminatoIl !== null) {
@@ -79,7 +81,7 @@ function Contenuto({ id }: { id: string | undefined }) {
     }
     const [s, a] = await Promise.all([repo.elencaSistemi(id), repo.elencaAttivita(id)]);
     setCliente(c);
-    setValori(daCliente(c));
+    if (aggiornaModulo) setValori(daCliente(c));
     setSistemi(s);
     setLog(a);
     setCaricato(true);
@@ -140,14 +142,17 @@ function Contenuto({ id }: { id: string | undefined }) {
     setAvviso(null);
     try {
       await repo.confermaInventario(id);
-      await ricarica();
+      // Modifiche non ancora salvate nel modulo: non vanno perse.
+      const modificato = cliente !== null && JSON.stringify(valori) !== JSON.stringify(daCliente(cliente));
+      await ricarica({ aggiornaModulo: !modificato });
     } catch (err) {
       setAvviso((err as Error).message);
     }
   }
 
   async function spostaNelCestino() {
-    if (!id || !window.confirm('Spostare il cliente nel cestino?')) return;
+    if (!id) return;
+    if (!(await conferma('Spostare il cliente nel cestino?'))) return;
     try {
       await repo.eliminaCliente(id);
       navigate('/');

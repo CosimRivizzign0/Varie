@@ -97,4 +97,20 @@ describe('SchedaCliente esistente', () => {
     expect(await screen.findByRole('link', { name: 'Nuovo cliente' })).toBeInTheDocument();
     expect(await repo.elencaClienti()).toHaveLength(0);
   });
+
+  it('Conferma inventario non perde le modifiche non salvate del modulo', async () => {
+    const repo = await nuovoRepository();
+    const c = await repo.creaCliente(clienteValido());
+    await repo.creaSistema(c.id, sistema);
+    renderizza(rotte(), repo, `/clienti/${c.id}`);
+    const u = userEvent.setup();
+    const settore = await screen.findByLabelText('Settore');
+    await u.clear(settore);
+    await u.type(settore, 'Logistica');
+    await u.click(screen.getByRole('button', { name: 'Conferma inventario' }));
+    await waitFor(async () => expect((await repo.getCliente(c.id))?.inventarioConfermato).toBe(true));
+    expect(await screen.findByText(/inventario/i, { selector: 'li' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Settore')).toHaveValue('Logistica');
+    expect((await repo.getCliente(c.id))?.settore).toBe('Manifattura');
+  });
 });
