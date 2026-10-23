@@ -3,6 +3,7 @@ import { Dashboard } from './pagine/Dashboard';
 import { SchedaCliente } from './pagine/SchedaCliente';
 import { SchedaSistema } from './pagine/SchedaSistema';
 import { Questionario } from './pagine/Questionario';
+import { EsitoValutazione } from './pagine/EsitoValutazione';
 import { Cestino } from './pagine/Cestino';
 import './stile.css';
 
@@ -37,6 +38,7 @@ export default function App({ erroreBackup = null, ripristinato = false }: Props
           <Route path="/clienti/:id/sistemi/nuovo" element={<SchedaSistema />} />
           <Route path="/sistemi/:id" element={<SchedaSistema />} />
           <Route path="/sistemi/:id/valutazione" element={<Questionario />} />
+          <Route path="/sistemi/:id/valutazione/esito" element={<EsitoValutazione />} />
           <Route path="/cestino" element={<Cestino />} />
         </Routes>
       </main>
