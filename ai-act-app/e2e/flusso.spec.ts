@@ -106,7 +106,28 @@ test('valutazione: screening CV (deployer) → Alto rischio → conferma → roa
   await page.getByRole('link', { name: 'AI Act Assessment' }).click();
   const riga = page.getByRole('listitem').filter({ hasText: 'Rossi S.r.l.' });
   await expect(riga.getByText('80%')).toBeVisible();
-  await expect(riga.getByText('In attesa della Fase 2b')).toBeVisible();
+  await expect(riga.getByText('Genera i report', { exact: true })).toBeVisible();
+
+  // Report (anteprima web: nessun dialogo, un download del browser per file): il Word del sistema confermato
+  // e l'Excel dell'inventario. Il listener dei download va registrato prima del clic.
+  await riga.getByRole('link', { name: 'Rossi S.r.l.' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Rossi S.r.l.' })).toBeVisible();
+  const generaReport = page.getByRole('button', { name: 'Genera report' });
+  await expect(generaReport).toBeEnabled();
+  // Due waitForEvent('download') si risolverebbero entrambi con il primo download: si raccolgono con un listener.
+  const nomiScaricati: string[] = [];
+  page.on('download', (d) => nomiScaricati.push(d.suggestedFilename()));
+  await generaReport.click();
+  await expect.poll(() => nomiScaricati.length).toBe(2);
+  const nomi = [...nomiScaricati].sort();
+  expect(nomi[0]).toMatch(/^AI-Act_Rossi-S\.r\.l_Screening-CV_\d{4}-\d{2}-\d{2}\.docx$/);
+  expect(nomi[1]).toMatch(/^AI-Act_Rossi-S\.r\.l_inventario_\d{4}-\d{2}-\d{2}\.xlsx$/);
+  await expect(page.getByText('File creati:')).toBeVisible();
+
+  await page.getByRole('link', { name: '← Clienti' }).click();
+  const rigaFinale = page.getByRole('listitem').filter({ hasText: 'Rossi S.r.l.' });
+  await expect(rigaFinale.getByText('100%')).toBeVisible();
+  await expect(rigaFinale.getByText('Assessment completato')).toBeVisible();
 
   expect(erroriConsole).toEqual([]);
 });

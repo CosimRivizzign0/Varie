@@ -28,6 +28,17 @@ Le regole di classificazione (domande del questionario, esiti, obblighi, date di
 - **Revisione**: `npm run regole:revisione` genera `docs/ai-act-app/revisione-regole.md`, la tabella delle voci con riferimento normativo, condizioni e stato, da far rivedere e correggere nel JSON.
 - **Cambio di versione**: quando si modifica `meta.versione`, le valutazioni compilate con una versione diversa mostrano il badge **Da rivedere** nella scheda del sistema: restano consultabili, e si puo' avviare una nuova valutazione con le regole aggiornate (la precedente resta nello storico).
 
+## Report
+
+- **Impostazioni studio**: nome, indirizzo, partita IVA, email e telefono dello studio (menu **Impostazioni**) compaiono nell'intestazione dei report.
+- **Genera report** (scheda cliente): si sceglie una cartella e l'app scrive un Word per ogni sistema con valutazione confermata e un Excel di inventario per il cliente, poi elenca i file creati. I sistemi senza classificazione confermata sono esclusi e indicati con «Non incluso: classificazione non confermata».
+- **Nomi dei file**: `AI-Act_<cliente>_<sistema>_<aaaa-mm-gg>.docx` e `AI-Act_<cliente>_inventario_<aaaa-mm-gg>.xlsx`, ripuliti da caratteri non validi su Windows e macOS (spazi come `-`, al massimo 80 caratteri per parte). Rigenerando lo stesso giorno i file vengono sovrascritti.
+- **Excel**: fogli `Inventario` (un sistema per riga) e `Obblighi` (solo sistemi con valutazione confermata), date come vere celle data.
+- **Esporta Word**: dalla pagina esito di una valutazione confermata si esporta il Word del singolo sistema, con «Salva con nome».
+- **Regole non validate**: se l'esito dipende da voci non `validata`, il Word riporta in evidenza l'avviso «Documento basato su regole non ancora validate dal consulente: verificare prima della consegna.». Ogni Word termina con la nota di riserva (strumento di supporto, non parere legale).
+- **Anteprima web** (`npm run dev`): nessuna finestra di dialogo, i file vengono scaricati dal browser.
+- La roadmap arriva al 100% («Assessment completato») quando i report sono generati e aggiornati.
+
 ## Dove sono i dati
 
 Nella cartella dati dell'app, identificativo `com.cosimorivizzigno.aiactassessment`:
@@ -42,4 +53,4 @@ La CI (`.github/workflows/ai-act-app.yml`) esegue i test e produce gli installer
 
 ## Roadmap
 
-Fase 1 (questa): anagrafica, inventario sistemi e roadmap; le fasi successive aggiungeranno la valutazione di rischio e i documenti.
+Fase 1: anagrafica, inventario sistemi e roadmap. Fase 2a: valutazione di rischio. Fase 2b (questa): report Word ed Excel.

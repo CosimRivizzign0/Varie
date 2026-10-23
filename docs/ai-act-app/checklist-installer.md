@@ -38,7 +38,17 @@ Serve per verificare che l'app si installi e che i dati non vadano persi. Non se
 15. [ ] Rispondi alle domande: **Sì** alla prima (e' un sistema di IA), **Sì** a «Il sistema e' usato per selezionare personale…», **No** a tutte le altre. Usa **Avanti** tra le sezioni. Chiudi l'app a meta' e riaprila: dal riquadro, **Riprendi** deve mostrare le risposte gia' date.
 16. [ ] All'ultima sezione clicca **Vai all'esito**: **deve comparire «Alto rischio»**, con motivazione e obblighi (tra questi gli articoli 26 e 86).
 17. [ ] Clicca **Conferma classificazione**: deve comparire «Confermata il…» con la data di oggi.
-18. [ ] Torna alla pagina iniziale (clic su **AI Act Assessment**): nella riga del cliente la roadmap deve mostrare **80%** e la prossima azione **In attesa della Fase 2b**.
+18. [ ] Torna alla pagina iniziale (clic su **AI Act Assessment**): nella riga del cliente la roadmap deve mostrare **80%** e la prossima azione **Genera i report**.
+
+## E. Report Word ed Excel
+
+19. [ ] Apri **Impostazioni** (dalla pagina iniziale), compila nome, indirizzo, partita IVA, email e telefono dello studio e clicca **Salva**: deve comparire «Impostazioni salvate.»
+20. [ ] Apri il cliente di prova e clicca **Genera report**. Scegli una cartella (ad esempio il Desktop): in fondo alla scheda deve comparire l'elenco dei **File creati** (un Word per il sistema confermato e un Excel dell'inventario). I sistemi senza valutazione confermata sono elencati con «Non incluso: classificazione non confermata».
+21. [ ] Apri il file `.docx` con **Word**. Controlla: intestazione con i dati dello studio, titolo con nome del sistema e cliente, classe **Alto rischio**, motivazione, tabella degli obblighi, date nel formato gg/mm/aaaa e, in fondo, la nota di riserva («…non costituisce parere legale definitivo»). Se le regole non sono ancora validate, in alto deve comparire l'avviso «Documento basato su regole non ancora validate…».
+22. [ ] Apri il file `.xlsx` con **Excel**. Controlla: fogli **Inventario** e **Obblighi**, riga di intestazione in grassetto e bloccata con filtro, colonne delle date mostrate come date (gg/mm/aaaa) e non come numeri.
+23. [ ] Clicca di nuovo **Genera report** nella stessa cartella: i file dello stesso giorno vengono sovrascritti (nessun duplicato).
+24. [ ] Dalla pagina **Esito** del sistema clicca **Esporta Word** e salva il file con «Salva con nome»: deve aprirsi in Word come il precedente.
+25. [ ] Torna alla pagina iniziale: nella riga del cliente la roadmap deve mostrare **100%** e **Assessment completato**.
 
 Consiglio: tieni attivata la cifratura del disco (BitLocker su Windows, FileVault su Mac), perché i dati dei clienti sono salvati sul computer.
 
