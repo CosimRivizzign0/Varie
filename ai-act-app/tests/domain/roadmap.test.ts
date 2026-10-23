@@ -81,6 +81,13 @@ describe('calcolaRoadmap', () => {
     expect(r.prossimaAzione).toBe("Completa l'anagrafica: manca il settore");
   });
 
+  it('inventario confermato con anagrafica non valida', () => {
+    const r = calcolaRoadmap({ ...cliente, settore: '', inventarioConfermato: true }, sistemi(2), oggi);
+    expect(stati(r)).toEqual(['in_corso', 'completata', 'bloccata', 'bloccata', 'bloccata']);
+    expect(r.percentuale).toBe(20);
+    expect(r.prossimaAzione).toBe("Completa l'anagrafica: manca il settore");
+  });
+
   it('altri campi non validi', () => {
     expect(calcolaRoadmap({ ...cliente, ragioneSociale: '' }, [], oggi).prossimaAzione).toBe("Completa l'anagrafica: manca la ragione sociale");
     expect(calcolaRoadmap({ ...cliente, partitaIva: '123' }, [], oggi).prossimaAzione).toBe("Completa l'anagrafica: manca la Partita IVA");

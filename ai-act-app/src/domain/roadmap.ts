@@ -39,7 +39,7 @@ export function calcolaRoadmap(cliente: Cliente, sistemiAttivi: SistemaAI[], ogg
   const validazione = validaCliente(cliente, oggi);
   const n = sistemiAttivi.length;
   const anagraficaOk = validazione.ok;
-  const inventarioOk = anagraficaOk && cliente.inventarioConfermato && n > 0;
+  const inventarioOk = cliente.inventarioConfermato && n > 0;
 
   const tappe: Tappa[] = [
     { id: 'anagrafica', etichetta: 'Anagrafica', stato: 'da_fare', dettaglio: null },
