@@ -51,6 +51,11 @@ pub async fn esporta_backup(stato: State<'_, Stato>, dest: PathBuf) -> Result<()
 }
 
 #[tauri::command]
+pub async fn scrivi_file(percorso: PathBuf, contenuto: Vec<u8>) -> Result<(), String> {
+    ai_act_store::scrivi_file_atomico(&percorso, &contenuto)
+}
+
+#[tauri::command]
 pub async fn ripristina_backup(stato: State<'_, Stato>, sorgente: PathBuf) -> Result<(), String> {
     let mut esclusi = esclusi(&stato)?;
     stato.store.ripristina(&sorgente, &stato.dir_backup)?;

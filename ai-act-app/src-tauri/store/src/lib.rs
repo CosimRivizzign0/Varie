@@ -363,6 +363,25 @@ pub fn ultimo_backup(dir: &Path) -> Option<PathBuf> {
     ultimo_backup_escludendo(dir, &[])
 }
 
+/// Scrive `contenuto` in `percorso` in modo atomico: file temporaneo nella stessa
+/// cartella, poi rename sopra la destinazione. Il temporaneo è rimosso se qualcosa fallisce.
+pub fn scrivi_file_atomico(percorso: &Path, contenuto: &[u8]) -> Result<()> {
+    let nome = percorso
+        .file_name()
+        .ok_or_else(|| format!("Percorso non valido: {}", percorso.display()))?
+        .to_string_lossy();
+    let tmp = percorso.with_file_name(format!(".{nome}.{}.tmp", std::process::id()));
+    if let Err(e) = std::fs::write(&tmp, contenuto) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(format!("Impossibile scrivere {}: {e}", percorso.display()));
+    }
+    if let Err(e) = std::fs::rename(&tmp, percorso) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(format!("Impossibile salvare {}: {e}", percorso.display()));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -724,5 +743,35 @@ mod test {
             .unwrap();
         assert_eq!(testi(&store), vec!["nel backup", "nuovo"]);
         assert_eq!(store.select("PRAGMA foreign_keys", &[]).unwrap()[0]["foreign_keys"], json!(1));
+    }
+
+    #[test]
+    fn scrivi_file_atomico_crea_e_sovrascrive_senza_residui() {
+        let dir = TempDir::new().unwrap();
+        let f = dir.path().join("report.docx");
+        scrivi_file_atomico(&f, b"uno").unwrap();
+        assert_eq!(std::fs::read(&f).unwrap(), b"uno");
+        scrivi_file_atomico(&f, &[0u8, 255, 7, 8]).unwrap();
+        assert_eq!(std::fs::read(&f).unwrap(), vec![0u8, 255, 7, 8]);
+        assert_eq!(file_backup(dir.path()), vec!["report.docx"]);
+    }
+
+    #[test]
+    fn scrivi_file_atomico_cartella_inesistente_da_errore_senza_tmp() {
+        let dir = TempDir::new().unwrap();
+        let f = dir.path().join("manca").join("report.docx");
+        assert!(scrivi_file_atomico(&f, b"x").is_err());
+        assert!(file_backup(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn scrivi_file_atomico_rimuove_il_tmp_se_il_rename_fallisce() {
+        let dir = TempDir::new().unwrap();
+        // La destinazione è una cartella non vuota: il rename fallisce dopo la scrittura del tmp.
+        let f = dir.path().join("report.docx");
+        std::fs::create_dir(&f).unwrap();
+        std::fs::write(f.join("dentro"), b"x").unwrap();
+        assert!(scrivi_file_atomico(&f, b"x").is_err());
+        assert_eq!(file_backup(dir.path()), vec!["report.docx"]);
     }
 }

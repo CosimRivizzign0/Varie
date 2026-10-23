@@ -36,6 +36,7 @@ fn main() {
             comandi::db_select,
             comandi::db_batch,
             comandi::esporta_backup,
+            comandi::scrivi_file,
             comandi::ripristina_backup,
             comandi::ripristina_ultimo_backup,
             comandi::stato_avvio,
