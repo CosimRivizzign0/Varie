@@ -1,8 +1,11 @@
 import { validaCliente } from '../domain/cliente';
+import { validaSistema } from '../domain/sistema';
 import { isScaduto } from '../domain/cestino';
 import type { Attivita, Cliente, SistemaAI, TipoAttivita } from '../domain/tipi';
 import type { Istruzione, Parametro, SqlDriver } from './driver';
 import {
+  ErroreClienteNelCestino,
+  ErroreInventarioVuoto,
   ErroreNonTrovato,
   ErrorePartitaIvaDuplicata,
   ErroreValidazione,
@@ -27,6 +30,13 @@ export interface Repository {
   elencaCestino(): Promise<ElementoCestino[]>;
   eliminaDefinitivamente(tipo: 'cliente' | 'sistema', id: string): Promise<void>;
   svuotaCestinoScaduto(): Promise<number>;
+  elencaSistemi(clienteId: string): Promise<SistemaAI[]>;
+  getSistema(id: string): Promise<SistemaAI | null>;
+  creaSistema(clienteId: string, input: unknown): Promise<SistemaAI>;
+  aggiornaSistema(id: string, input: unknown): Promise<SistemaAI>;
+  eliminaSistema(id: string): Promise<void>;
+  ripristinaSistema(id: string): Promise<void>;
+  confermaInventario(clienteId: string): Promise<void>;
 }
 
 export interface DipendenzeRepository {
@@ -54,7 +64,6 @@ function rigaACliente(r: Riga): Cliente {
   };
 }
 
-// Sarà usata dai metodi sui sistemi (Task 6).
 export function rigaASistema(r: Riga): SistemaAI {
   return {
     id: r.id as string,
@@ -80,10 +89,37 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
     tipo: TipoAttivita,
     descrizione: string,
     quando: string,
+    sistemaId: string | null = null,
   ): Istruzione => ({
     sql: `INSERT INTO attivita (id, cliente_id, sistema_id, tipo, descrizione, quando)
-          VALUES (?, ?, NULL, ?, ?, ?)`,
-    params: [nuovoId(), clienteId, tipo, descrizione, quando],
+          VALUES (?, ?, ?, ?, ?, ?)`,
+    params: [nuovoId(), clienteId, sistemaId, tipo, descrizione, quando],
+  });
+
+  async function leggiSistema(id: string): Promise<SistemaAI | null> {
+    const righe = await driver.select<Riga>('SELECT * FROM sistemi WHERE id = ?', [id]);
+    return righe[0] ? rigaASistema(righe[0]) : null;
+  }
+
+  async function sistemaAttivo(id: string): Promise<SistemaAI> {
+    const s = await leggiSistema(id);
+    if (!s || s.eliminatoIl !== null) throw new ErroreNonTrovato('Sistema non trovato');
+    return s;
+  }
+
+  function validaSis(input: unknown) {
+    const esito = validaSistema(input);
+    if (!esito.ok) {
+      const errori: Record<string, string> = {};
+      for (const [k, v] of Object.entries(esito.errori)) if (v) errori[k] = v;
+      throw new ErroreValidazione(errori);
+    }
+    return esito.valore;
+  }
+
+  const azzeraInventario = (clienteId: string): Istruzione => ({
+    sql: 'UPDATE clienti SET inventario_confermato = 0 WHERE id = ?',
+    params: [clienteId],
   });
 
   async function leggi(id: string): Promise<Cliente | null> {
@@ -274,6 +310,94 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
       const rimossi = clientiScaduti.length + sistemiScaduti.length;
       if (istruzioni.length > 0) await driver.batch(istruzioni);
       return rimossi;
+    },
+
+    async elencaSistemi(clienteId) {
+      const righe = await driver.select<Riga>(
+        'SELECT * FROM sistemi WHERE cliente_id = ? AND eliminato_il IS NULL ORDER BY nome COLLATE NOCASE, id',
+        [clienteId],
+      );
+      return righe.map(rigaASistema);
+    },
+
+    getSistema: leggiSistema,
+
+    async creaSistema(clienteId, input) {
+      await attivo(clienteId);
+      const v = validaSis(input);
+      const t = ora().toISOString();
+      const id = nuovoId();
+      await driver.batch([
+        {
+          sql: `INSERT INTO sistemi (id, cliente_id, nome, fornitore, scopo, ruolo_cliente,
+                  reparto, data_avvio, creato_il, modificato_il, eliminato_il)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+          params: [id, clienteId, v.nome, v.fornitore, v.scopo, v.ruoloCliente, v.reparto, v.dataAvvio, t, t],
+        },
+        azzeraInventario(clienteId),
+        attivita(clienteId, 'creato', `Sistema "${v.nome}" aggiunto`, t, id),
+      ]);
+      return (await leggiSistema(id)) as SistemaAI;
+    },
+
+    async aggiornaSistema(id, input) {
+      const corrente = await sistemaAttivo(id);
+      const v = validaSis(input);
+      const t = ora().toISOString();
+      await driver.batch([
+        {
+          sql: `UPDATE sistemi SET nome = ?, fornitore = ?, scopo = ?, ruolo_cliente = ?,
+                  reparto = ?, data_avvio = ?, modificato_il = ?
+                WHERE id = ?`,
+          params: [v.nome, v.fornitore, v.scopo, v.ruoloCliente, v.reparto, v.dataAvvio, t, id],
+        },
+        attivita(corrente.clienteId, 'modificato', `Sistema "${v.nome}" modificato`, t, id),
+      ]);
+      return (await leggiSistema(id)) as SistemaAI;
+    },
+
+    async eliminaSistema(id) {
+      const s = await sistemaAttivo(id);
+      const t = ora().toISOString();
+      await driver.batch([
+        { sql: 'UPDATE sistemi SET eliminato_il = ? WHERE id = ?', params: [t, id] },
+        azzeraInventario(s.clienteId),
+        attivita(s.clienteId, 'eliminato', `Sistema "${s.nome}" spostato nel cestino`, t, id),
+      ]);
+    },
+
+    async ripristinaSistema(id) {
+      const s = await leggiSistema(id);
+      if (!s || s.eliminatoIl === null) throw new ErroreNonTrovato('Sistema non trovato nel cestino');
+      const c = await leggi(s.clienteId);
+      if (!c) throw new ErroreNonTrovato('Cliente non trovato');
+      if (c.eliminatoIl !== null) throw new ErroreClienteNelCestino();
+      const t = ora().toISOString();
+      await driver.batch([
+        { sql: 'UPDATE sistemi SET eliminato_il = NULL WHERE id = ?', params: [id] },
+        azzeraInventario(s.clienteId),
+        attivita(s.clienteId, 'ripristinato', `Sistema "${s.nome}" ripristinato`, t, id),
+      ]);
+    },
+
+    async confermaInventario(clienteId) {
+      await attivo(clienteId);
+      const righe = await driver.select<Riga>(
+        'SELECT COUNT(*) AS n FROM sistemi WHERE cliente_id = ? AND eliminato_il IS NULL',
+        [clienteId],
+      );
+      const conteggio = Number(righe[0]?.n ?? 0);
+      if (conteggio === 0) throw new ErroreInventarioVuoto();
+      const t = ora().toISOString();
+      await driver.batch([
+        { sql: 'UPDATE clienti SET inventario_confermato = 1 WHERE id = ?', params: [clienteId] },
+        attivita(
+          clienteId,
+          'inventario_confermato',
+          `Inventario confermato (${conteggio === 1 ? '1 sistema' : `${conteggio} sistemi`})`,
+          t,
+        ),
+      ]);
     },
   };
 }
