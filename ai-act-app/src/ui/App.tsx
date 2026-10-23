@@ -1,7 +1,8 @@
 import { HashRouter, Link, Route, Routes } from 'react-router-dom';
 import { Dashboard } from './pagine/Dashboard';
 import { SchedaCliente } from './pagine/SchedaCliente';
-import { Segnaposto } from './pagine/Segnaposto';
+import { SchedaSistema } from './pagine/SchedaSistema';
+import { Cestino } from './pagine/Cestino';
 import './stile.css';
 
 export default function App() {
@@ -15,9 +16,9 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/clienti/nuovo" element={<SchedaCliente />} />
           <Route path="/clienti/:id" element={<SchedaCliente />} />
-          <Route path="/clienti/:id/sistemi/nuovo" element={<Segnaposto titolo="Nuovo sistema AI" />} />
-          <Route path="/sistemi/:id" element={<Segnaposto titolo="Sistema AI" />} />
-          <Route path="/cestino" element={<Segnaposto titolo="Cestino" />} />
+          <Route path="/clienti/:id/sistemi/nuovo" element={<SchedaSistema />} />
+          <Route path="/sistemi/:id" element={<SchedaSistema />} />
+          <Route path="/cestino" element={<Cestino />} />
         </Routes>
       </main>
     </HashRouter>
