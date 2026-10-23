@@ -39,10 +39,13 @@ function dati(extra: Partial<DatiReportSistema> = {}): DatiReportSistema {
   };
 }
 
+async function file(d: DatiReportSistema, nome: string): Promise<string> {
+  const zip = await JSZip.loadAsync(await creaWord(d));
+  return zip.file(nome)!.async('string');
+}
+
 async function testo(d: DatiReportSistema): Promise<string> {
-  const bytes = await creaWord(d);
-  const zip = await JSZip.loadAsync(bytes);
-  const xml = await zip.file('word/document.xml')!.async('string');
+  const xml = await file(d, 'word/document.xml');
   return xml
     .replace(/<\/w:p>/g, '\n')
     .replace(/<[^>]+>/g, '')
@@ -115,5 +118,48 @@ describe('creaWord', () => {
   it('studio parziale: solo i campi valorizzati', async () => {
     const t = await testo(dati({ studio: { ...studioVuoto, email: 'info@studio.it' } }));
     expect(t).toContain('info@studio.it');
+  });
+
+  it('apostrofi, accenti ed emoji restano identici', async () => {
+    const t = await testo(
+      dati({
+        cliente: { ...dati().cliente, ragioneSociale: "L'Officina ✓" },
+        motivazione: [{ testo: 'È un sistema già in uso 🚀', riferimento: 'art. 6' }],
+      }),
+    );
+    expect(t).toContain("L'Officina ✓");
+    expect(t).toContain('È un sistema già in uso 🚀');
+  });
+
+  it('le sezioni seguono l\'ordine della specifica', async () => {
+    const t = await testo(dati());
+    const ordine = [
+      'Studio Bianchi',
+      'Valutazione AI Act — Selezione CV',
+      'Cliente\n',
+      'Sistema\n',
+      'Classificazione\n',
+      'Motivazione\n',
+      'Punti da approfondire',
+      'Obblighi\n',
+      'Valutazione confermata il',
+      'Il presente documento è uno strumento',
+    ];
+    const pos = ordine.map((x) => t.indexOf(x));
+    expect(pos.every((p) => p >= 0)).toBe(true);
+    expect([...pos].sort((a, b) => a - b)).toEqual(pos);
+  });
+
+  it('l\'avviso è riquadrato e in grassetto', async () => {
+    const xml = await file(dati({ regoleNonValidate: true }), 'word/document.xml');
+    const par = xml.split('<w:p>').concat(xml.split('<w:p ')).find((p) => p.includes('Documento basato su regole'))!;
+    expect(par).toContain('<w:pBdr>');
+    expect(par).toContain('<w:b/>');
+  });
+
+  it('il font predefinito è Calibri 11', async () => {
+    const xml = await file(dati(), 'word/styles.xml');
+    expect(xml).toContain('Calibri');
+    expect(xml).toMatch(/<w:docDefaults>[\s\S]*<w:sz w:val="22"\/>[\s\S]*<\/w:docDefaults>/);
   });
 });
