@@ -10,8 +10,9 @@
     "noUnusedParameters": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "tests", "vite.config.ts", "playwright.config.ts", "e2e"]
+  "include": ["src", "tests", "regole", "vite.config.ts", "playwright.config.ts", "e2e"]
 }
