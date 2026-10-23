@@ -121,10 +121,40 @@ fn nomi_backup(dir: &Path) -> Vec<String> {
     nomi
 }
 
+/// Copia byte per byte di `percorso_db` in `dest` (file temporaneo e poi rinomina):
+/// serve quando il database è danneggiato e `VACUUM INTO` non può leggerlo.
+fn copia_grezza(percorso_db: &Path, dest: &Path) -> Result<()> {
+    let nome = dest
+        .file_name()
+        .ok_or_else(|| format!("Percorso non valido: {}", dest.display()))?
+        .to_string_lossy();
+    let tmp = dest.with_file_name(format!(".{nome}.tmp"));
+    let esito = std::fs::copy(percorso_db, &tmp)
+        .map_err(errore)
+        .and_then(|_| std::fs::rename(&tmp, dest).map_err(errore));
+    if esito.is_err() {
+        let _ = std::fs::remove_file(&tmp);
+    }
+    esito
+}
+
+/// Data e ora locali `YYYYMMDD-HHMMSS`, calcolate su una connessione in memoria:
+/// funziona anche quando il database corrente non è leggibile.
+fn ora_locale() -> Result<String> {
+    Connection::open_in_memory()
+        .and_then(|c| c.query_row("SELECT strftime('%Y%m%d-%H%M%S', 'now', 'localtime')", [], |r| r.get(0)))
+        .map_err(errore)
+}
+
 fn backup_ruotato(conn: &Connection, percorso_db: &Path, dir: &Path, ora: &str) -> Result<PathBuf> {
+    ruotato_con(dir, ora, |dest| vacuum_in(conn, percorso_db, dest))
+}
+
+/// Crea `ai-act-<ora>.db` in `dir` con `scrivi`, poi conserva solo i 10 backup più recenti.
+fn ruotato_con(dir: &Path, ora: &str, scrivi: impl FnOnce(&Path) -> Result<()>) -> Result<PathBuf> {
     std::fs::create_dir_all(dir).map_err(errore)?;
     let dest = dir.join(format!("ai-act-{ora}.db"));
-    vacuum_in(conn, percorso_db, &dest)?;
+    scrivi(&dest)?;
     let nomi = nomi_backup(dir);
     let eccedenti = nomi.len().saturating_sub(BACKUP_CONSERVATI);
     for nome in &nomi[..eccedenti] {
@@ -243,10 +273,15 @@ impl Store {
     fn sostituisci_con(&self, tmp: &Path, dir_backup: &Path) -> Result<()> {
         let mut guardia = self.guardia()?;
         let conn = attiva(&mut guardia)?;
-        let ora: String = conn
-            .query_row("SELECT strftime('%Y%m%d-%H%M%S', 'now', 'localtime')", [], |r| r.get(0))
-            .map_err(errore)?;
-        backup_ruotato(conn, &self.percorso, dir_backup, &ora)?;
+        let ora = ora_locale()?;
+        if let Err(e_vacuum) = backup_ruotato(conn, &self.percorso, dir_backup, &ora) {
+            // Database corrente danneggiato ("file is not a database"): VACUUM INTO non
+            // può leggerlo, ma il ripristino deve comunque poter procedere. Se ne
+            // conserva una copia grezza con lo stesso nome e la stessa rotazione.
+            ruotato_con(dir_backup, &ora, |dest| copia_grezza(&self.percorso, dest)).map_err(|e| {
+                format!("Impossibile salvare una copia del database corrente prima del ripristino: {e_vacuum}; {e}")
+            })?;
+        }
 
         // Chiude la connessione corrente prima di sostituire il file.
         if let Some(vecchia) = guardia.take() {
@@ -469,6 +504,33 @@ mod test {
         assert_eq!(testi(&store), vec!["riga 0"]);
         let db: Vec<String> = file_backup(&dir_backup).into_iter().filter(|n| n.ends_with(".db")).collect();
         assert_eq!(db.len(), 10);
+    }
+
+    #[test]
+    fn ripristina_con_database_corrente_danneggiato_salva_una_copia_grezza_e_procede() {
+        let dir = TempDir::new().unwrap();
+        let percorso = dir.path().join("ai-act.db");
+        let valido = dir.path().join("valido.db");
+        {
+            let store = store_con_tabella(&dir);
+            store
+                .batch(&[ist("INSERT INTO t (testo) VALUES (?)", vec![json!("dal backup")])])
+                .unwrap();
+            store.backup_in(&valido).unwrap();
+        }
+        let spazzatura: Vec<u8> = b"questo file non e' un database SQLite ".repeat(200);
+        std::fs::write(&percorso, &spazzatura).unwrap();
+        let store = Store::apri(&percorso).unwrap();
+        assert!(store.select("SELECT * FROM t", &[]).is_err());
+
+        let dir_backup = dir.path().join("backup");
+        store.ripristina(&valido, &dir_backup).unwrap();
+        assert_eq!(testi(&store), vec!["dal backup"]);
+        let backup = file_backup(&dir_backup);
+        assert_eq!(backup.len(), 1);
+        assert!(backup[0].starts_with("ai-act-") && backup[0].ends_with(".db"));
+        assert_eq!(std::fs::read(dir_backup.join(&backup[0])).unwrap(), spazzatura);
+        assert_eq!(ultimo_backup(&dir_backup), Some(dir_backup.join(&backup[0])));
     }
 
     #[test]
