@@ -7,13 +7,13 @@ import './aiuti';
 
 const roadmap: Roadmap = {
   percentuale: 40,
-  prossimaAzione: 'In attesa della Fase 2',
+  prossimaAzione: 'In attesa della Fase 2b',
   tappe: [
     { id: 'anagrafica', etichetta: 'Anagrafica', stato: 'completata', dettaglio: null },
     { id: 'inventario', etichetta: 'Inventario', stato: 'completata', dettaglio: '2 sistemi' },
-    { id: 'questionario', etichetta: 'Questionario', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2' },
-    { id: 'classificazione', etichetta: 'Classificazione', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2' },
-    { id: 'report', etichetta: 'Report', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2' },
+    { id: 'questionario', etichetta: 'Questionario', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2b' },
+    { id: 'classificazione', etichetta: 'Classificazione', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2b' },
+    { id: 'report', etichetta: 'Report', stato: 'bloccata', dettaglio: 'disponibile dalla Fase 2b' },
   ],
 };
 
@@ -23,9 +23,9 @@ describe('RoadmapBar', () => {
     const voci = within(screen.getByRole('list')).getAllByRole('listitem');
     expect(voci).toHaveLength(5);
     expect(voci.filter((v) => v.getAttribute('aria-label')?.includes('completata'))).toHaveLength(2);
-    expect(screen.getAllByText('disponibile dalla Fase 2')).toHaveLength(3);
+    expect(screen.getAllByText('disponibile dalla Fase 2b')).toHaveLength(3);
     expect(screen.getByText('40%')).toBeInTheDocument();
-    expect(screen.getByText('▶ Prossima azione: In attesa della Fase 2')).toBeInTheDocument();
+    expect(screen.getByText('▶ Prossima azione: In attesa della Fase 2b')).toBeInTheDocument();
   });
 
   it('la variante compatta non mostra la prossima azione', () => {

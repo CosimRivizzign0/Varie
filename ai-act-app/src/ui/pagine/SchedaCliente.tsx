@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { validaCliente } from '../../domain/cliente';
 import { calcolaRoadmap } from '../../domain/roadmap';
+import { sintesiPerRoadmap, type SintesiValutazione } from '../../domain/valutazione';
+import { REGOLE } from '../../regole/attive';
 import { RUOLI, type Attivita, type Cliente, type SistemaAI } from '../../domain/tipi';
 import { ErroreValidazione } from '../../archivio/errori';
 import { useRepository } from '../RepositoryContext';
@@ -62,6 +64,7 @@ function Contenuto({ id }: { id: string | undefined }) {
   const [valori, setValori] = useState<Valori>(VUOTO);
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [sistemi, setSistemi] = useState<SistemaAI[]>([]);
+  const [sintesi, setSintesi] = useState<SintesiValutazione[]>([]);
   const [log, setLog] = useState<Attivita[]>([]);
   const [caricato, setCaricato] = useState(id === undefined);
   const [toccati, setToccati] = useState<Set<string>>(new Set());
@@ -82,6 +85,9 @@ function Contenuto({ id }: { id: string | undefined }) {
     const [s, a] = await Promise.all([repo.elencaSistemi(id), repo.elencaAttivita(id)]);
     setCliente(c);
     if (aggiornaModulo) setValori(daCliente(c));
+    const attive = await Promise.all(s.map((x) => repo.getValutazioneAttiva(x.id)));
+    const sint = sintesiPerRoadmap(s, attive, REGOLE?.meta.versione ?? '');
+    setSintesi(REGOLE ? sint : sint.map((x) => ({ ...x, daRivedere: false })));
     setSistemi(s);
     setLog(a);
     setCaricato(true);
@@ -172,7 +178,7 @@ function Contenuto({ id }: { id: string | undefined }) {
       <p><Link to="/">← Clienti</Link></p>
       <h1>{cliente ? cliente.ragioneSociale : 'Nuovo cliente'}</h1>
       {cliente && (
-        <RoadmapBar roadmap={calcolaRoadmap(cliente, sistemi, new Date())} variante="estesa" />
+        <RoadmapBar roadmap={calcolaRoadmap(cliente, sistemi, new Date(), sintesi)} variante="estesa" />
       )}
       {avviso && <div role="alert" className="avviso">{avviso}</div>}
 

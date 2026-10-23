@@ -4,6 +4,8 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 import { ambienteTauri, esportaBackup, ricarica, ripristinaBackup } from '../../archivio/avvio';
 import type { Cliente } from '../../domain/tipi';
 import { calcolaRoadmap, type Roadmap } from '../../domain/roadmap';
+import { sintesiPerRoadmap } from '../../domain/valutazione';
+import { REGOLE } from '../../regole/attive';
 import { normalizzaPartitaIva } from '../../domain/partitaIva';
 import { useRepository } from '../RepositoryContext';
 import { RoadmapBar } from '../componenti/RoadmapBar';
@@ -85,10 +87,12 @@ export function Dashboard() {
         const clienti = await repo.elencaClienti();
         const oggi = new Date();
         const caricate = await Promise.all(
-          clienti.map(async (cliente) => ({
-            cliente,
-            roadmap: calcolaRoadmap(cliente, await repo.elencaSistemi(cliente.id), oggi),
-          })),
+          clienti.map(async (cliente) => {
+            const sistemi = await repo.elencaSistemi(cliente.id);
+            const attive = await Promise.all(sistemi.map((s) => repo.getValutazioneAttiva(s.id)));
+            const sintesi = sintesiPerRoadmap(sistemi, attive, REGOLE?.meta.versione ?? '');
+            return { cliente, roadmap: calcolaRoadmap(cliente, sistemi, oggi, REGOLE ? sintesi : sintesi.map((x) => ({ ...x, daRivedere: false }))) };
+          }),
         );
         if (attivo) setRighe(caricate);
       } catch (e) {

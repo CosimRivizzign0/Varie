@@ -1,3 +1,4 @@
+import type { SistemaAI } from './tipi';
 import type { EsitoValutazione } from '../regole/motore';
 import type { Classe, Risposte } from '../regole/tipi';
 
@@ -16,4 +17,28 @@ export interface Valutazione {
   modificatoIl: string;
   confermatoIl: string | null;
   sostituitaIl: string | null;
+}
+
+export interface SintesiValutazione {
+  sistemaId: string;
+  sistemaNome: string;
+  stato: StatoValutazione | null;
+  daRivedere: boolean;
+}
+
+/** `attive[i]` è la valutazione attiva di `sistemi[i]` (o null). */
+export function sintesiPerRoadmap(
+  sistemi: SistemaAI[],
+  attive: (Valutazione | null)[],
+  versioneCorrente: string,
+): SintesiValutazione[] {
+  return sistemi.map((s, i) => {
+    const v = attive[i] ?? null;
+    return {
+      sistemaId: s.id,
+      sistemaNome: s.nome,
+      stato: v?.stato ?? null,
+      daRivedere: v !== null && v.versioneRegole !== versioneCorrente,
+    };
+  });
 }

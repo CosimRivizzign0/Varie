@@ -35,12 +35,12 @@ test('flusso completo: cliente, due sistemi, conferma inventario, dashboard al 4
   await aggiungiSistema(page, 'Chatbot HR', 'OpenAI', 'Risposte ai dipendenti');
   await aggiungiSistema(page, 'Scoring CV', 'Acme AI', 'Selezione del personale');
   await page.getByRole('button', { name: 'Conferma inventario' }).click();
-  await expect(page.getByText('Prossima azione: In attesa della Fase 2')).toBeVisible();
+  await expect(page.getByText('Prossima azione: Compila il questionario per «Chatbot HR»')).toBeVisible();
 
   await page.getByRole('link', { name: '← Clienti' }).click();
   const riga = page.getByRole('listitem').filter({ hasText: 'Rossi S.r.l.' });
   await expect(riga.getByText('40%')).toBeVisible();
-  await expect(riga.getByText('In attesa della Fase 2')).toBeVisible();
+  await expect(riga.getByText('Compila il questionario per «Chatbot HR»')).toBeVisible();
 
   expect(erroriConsole).toEqual([]);
 });
