@@ -171,7 +171,7 @@ Regole:
 | 1 | Registro + roadmap (questo documento) | installer funzionante; un cliente reale inserito resta salvato dopo riavvio |
 | 2 | Questionario + classificazione (art. 5, 6, 50, Allegato III) con regole in file versionati | 3 casi test (vietato, alto rischio, minimo) classificati correttamente |
 | 2b | Report Word per sistema + Excel inventario per cliente | il Word si apre e si modifica in Office |
-| 3 | Analisi documentale con LLM che propone risposte, confermate dall'utente | prima: decisione LLM locale vs API con DPA |
+| 3 | Analisi documentale con LLM che propone risposte, confermate dall'utente | decisione utente 2026-10-23: **LLM locale** (nessun dato esce dal PC) |
 
 **Prerequisito della Fase 2:** verificare lo stato del "Digital Omnibus" (proposta della
 Commissione, nov. 2025) per le date applicabili agli obblighi alto rischio (art. 113).
