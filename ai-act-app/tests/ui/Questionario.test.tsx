@@ -8,6 +8,7 @@ import { Questionario } from '../../src/ui/pagine/Questionario';
 import { EsitoValutazione } from '../../src/ui/pagine/EsitoValutazione';
 import type { Repository } from '../../src/archivio/repository';
 import { REGOLE } from '../../src/regole/attive';
+import { calcolaEsito } from '../../src/regole/motore';
 import { clienteValido, nuovoRepository, renderizza } from './aiuti';
 
 const sistema = {
@@ -99,6 +100,24 @@ describe('Questionario', () => {
     expect(await screen.findByRole('button', { name: 'Conferma classificazione' })).toBeInTheDocument();
     expect(screen.queryByText('Questionario incompleto')).toBeNull();
     expect((await repo.getValutazioneAttiva(s.id))?.stato).toBe('completata');
+  });
+
+  it("svuotamento senza nulla in sospeso: le risposte successive vengono salvate", async () => {
+    const { repo, s } = await preparato();
+    const v = await repo.avviaValutazione(s.id, REGOLE!.meta.versione);
+    const risposte = { amb_sistema_ia: 'no' as const };
+    await repo.salvaRisposte(v.id, risposte, calcolaEsito(REGOLE!, risposte, 'deployer'), REGOLE!.meta.versione);
+    const u = userEvent.setup();
+    // La stessa istanza del questionario resta montata anche dopo la navigazione verso l'esito
+    renderizza(
+      <Routes><Route path="/sistemi/:id/valutazione/*" element={<Questionario />} /></Routes>,
+      repo,
+      `/sistemi/${s.id}/valutazione`,
+    );
+    await u.click(await screen.findByRole('button', { name: "Vai all'esito" }));
+    const gruppo = await screen.findByRole('group', { name: /sistema di IA/ });
+    await u.click(within(gruppo).getByRole('radio', { name: 'Sì' }));
+    await waitFor(async () => expect((await repo.getValutazioneAttiva(s.id))?.risposte.amb_sistema_ia).toBe('si'));
   });
 
   it("Vai all'esito non naviga se il salvataggio fallisce", async () => {

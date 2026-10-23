@@ -93,6 +93,8 @@ function Contenuto({ id }: { id: string }) {
 
   function svuotaCoda(): Promise<boolean> {
     if (inVolo.current) return inVolo.current;
+    // Niente da salvare: il giro finirebbe prima di essere registrato e resterebbe in inVolo per sempre.
+    if (!sporco.current) return Promise.resolve(true);
     const giro = (async () => {
       let ok = true;
       try {
