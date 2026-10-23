@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import '../stile.css';
 import { ricarica } from '../../archivio/avvio';
+import { segnaRipristino } from '../../archivio/sessione';
 
 interface Props {
   messaggio: string;
@@ -18,6 +19,7 @@ export function ErroreAvvio({ messaggio, ripristina }: Props) {
     setErrore(null);
     try {
       await ripristina();
+      segnaRipristino();
       ricarica();
     } catch (e) {
       setErrore(e instanceof Error ? e.message : String(e));

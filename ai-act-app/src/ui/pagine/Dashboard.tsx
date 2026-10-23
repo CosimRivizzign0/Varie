@@ -7,6 +7,8 @@ import { calcolaRoadmap, type Roadmap } from '../../domain/roadmap';
 import { normalizzaPartitaIva } from '../../domain/partitaIva';
 import { useRepository } from '../RepositoryContext';
 import { RoadmapBar } from '../componenti/RoadmapBar';
+import { conferma } from '../conferma';
+import { segnaRipristino } from '../../archivio/sessione';
 
 interface Riga {
   cliente: Cliente;
@@ -53,8 +55,9 @@ function MenuBackup() {
     esegui(async () => {
       const sorgente = await open({ multiple: false, directory: false, filters: FILTRO_DB });
       if (!sorgente) return;
-      if (!window.confirm('Ripristinare il backup? I dati attuali verranno salvati in un backup prima della sostituzione.')) return;
+      if (!(await conferma('Ripristinare il backup? I dati attuali verranno salvati in un backup prima della sostituzione.'))) return;
       await ripristinaBackup(sorgente);
+      segnaRipristino();
       ricarica();
     });
 
@@ -73,19 +76,24 @@ export function Dashboard() {
   const [righe, setRighe] = useState<Riga[] | null>(null);
   const [ricerca, setRicerca] = useState('');
   const [tappa, setTappa] = useState('');
+  const [erroreCaricamento, setErroreCaricamento] = useState<string | null>(null);
 
   useEffect(() => {
     let attivo = true;
     (async () => {
-      const clienti = await repo.elencaClienti();
-      const oggi = new Date();
-      const caricate = await Promise.all(
-        clienti.map(async (cliente) => ({
-          cliente,
-          roadmap: calcolaRoadmap(cliente, await repo.elencaSistemi(cliente.id), oggi),
-        })),
-      );
-      if (attivo) setRighe(caricate);
+      try {
+        const clienti = await repo.elencaClienti();
+        const oggi = new Date();
+        const caricate = await Promise.all(
+          clienti.map(async (cliente) => ({
+            cliente,
+            roadmap: calcolaRoadmap(cliente, await repo.elencaSistemi(cliente.id), oggi),
+          })),
+        );
+        if (attivo) setRighe(caricate);
+      } catch (e) {
+        if (attivo) setErroreCaricamento(messaggioDi(e));
+      }
     })();
     return () => {
       attivo = false;
@@ -129,7 +137,9 @@ export function Dashboard() {
           </select>
         </label>
       </div>
-      {righe === null ? (
+      {erroreCaricamento ? (
+        <div role="alert" className="avviso">{erroreCaricamento}</div>
+      ) : righe === null ? (
         <p>Caricamento…</p>
       ) : righe.length === 0 ? (
         <p className="vuoto">Nessun cliente. Inizia con «Nuovo cliente».</p>

@@ -53,3 +53,4 @@ a { color: var(--primario); }
 .log li, .elenco-sistemi li { padding: 4px 0; border-bottom: 1px solid var(--bordo); }
 .avviso-avvio { margin: 0; border-radius: 0; border-width: 0 0 1px; }
 .esito-backup { flex-basis: 100%; margin: 0; }
+.esito-avvio { margin: 0; padding: 10px 24px; background: var(--superficie); border-bottom: 1px solid var(--ok); color: var(--ok); }

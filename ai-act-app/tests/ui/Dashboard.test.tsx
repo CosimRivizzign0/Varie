@@ -38,4 +38,12 @@ describe('Dashboard', () => {
     expect(righe).toHaveLength(1);
     expect(within(righe[0]).getByText('Acme Srl')).toBeInTheDocument();
   });
+
+  it('errore di caricamento mostrato in role=alert', async () => {
+    const repo = await nuovoRepository();
+    const rotto = { ...repo, elencaClienti: () => Promise.reject(new Error("Database non disponibile: riavviare l'app")) };
+    renderizza(<Dashboard />, rotto);
+    expect(await screen.findByRole('alert')).toHaveTextContent("Database non disponibile: riavviare l'app");
+    expect(screen.queryByText('Caricamento…')).toBeNull();
+  });
 });

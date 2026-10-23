@@ -8,9 +8,11 @@ import './stile.css';
 interface Props {
   /** Errore del backup automatico all'avvio: avviso non bloccante. */
   erroreBackup?: string | null;
+  /** Primo caricamento dopo un ripristino di backup: avviso non bloccante. */
+  ripristinato?: boolean;
 }
 
-export default function App({ erroreBackup = null }: Props) {
+export default function App({ erroreBackup = null, ripristinato = false }: Props) {
   return (
     <HashRouter>
       <header className="intestazione">
@@ -19,6 +21,11 @@ export default function App({ erroreBackup = null }: Props) {
       {erroreBackup && (
         <p className="avviso avviso-avvio" role="alert">
           Backup automatico non riuscito: {erroreBackup}
+        </p>
+      )}
+      {ripristinato && (
+        <p className="esito-avvio" role="status">
+          Backup ripristinato. Gli elementi nel cestino da oltre 30 giorni verranno eliminati al prossimo avvio.
         </p>
       )}
       <main className="contenuto">

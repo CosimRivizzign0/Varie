@@ -7,11 +7,12 @@ const mocks = vi.hoisted(() => ({
   invoke: vi.fn(),
   open: vi.fn(),
   save: vi.fn(),
+  confirm: vi.fn(),
   ricarica: vi.fn(),
   tauri: { attivo: true },
 }));
 vi.mock('@tauri-apps/api/core', () => ({ invoke: mocks.invoke }));
-vi.mock('@tauri-apps/plugin-dialog', () => ({ open: mocks.open, save: mocks.save }));
+vi.mock('@tauri-apps/plugin-dialog', () => ({ open: mocks.open, save: mocks.save, confirm: mocks.confirm }));
 vi.mock('../../src/archivio/avvio', async (originale) => ({
   ...(await originale<typeof import('../../src/archivio/avvio')>()),
   ambienteTauri: () => mocks.tauri.attivo,
@@ -29,6 +30,7 @@ const FILTRO = [{ name: 'Database', extensions: ['db'] }];
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sessionStorage.clear();
   mocks.tauri.attivo = true;
   mocks.invoke.mockResolvedValue(null);
 });
@@ -61,38 +63,39 @@ describe('menu backup in Dashboard', () => {
 
   it('Ripristina backup chiede conferma, ripristina e ricarica', async () => {
     mocks.open.mockResolvedValue('/tmp/vecchio.db');
-    const conferma = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const conferma = mocks.confirm.mockResolvedValue(true);
     renderizza(<Dashboard />, await nuovoRepository());
     await userEvent.click(await screen.findByRole('button', { name: 'Ripristina backup' }));
     await waitFor(() => expect(mocks.ricarica).toHaveBeenCalled());
     expect(conferma).toHaveBeenCalledWith(
       'Ripristinare il backup? I dati attuali verranno salvati in un backup prima della sostituzione.',
+      expect.objectContaining({ title: 'AI Act Assessment', kind: 'warning' }),
     );
     expect(mocks.open).toHaveBeenCalledWith(expect.objectContaining({ multiple: false, filters: FILTRO }));
     expect(mocks.invoke).toHaveBeenCalledWith('ripristina_backup', { sorgente: '/tmp/vecchio.db' });
-    conferma.mockRestore();
+    expect(sessionStorage.getItem('aiact.saltaPulizia')).toBe('1');
   });
 
   it('Ripristina backup senza conferma non tocca nulla', async () => {
     mocks.open.mockResolvedValue('/tmp/vecchio.db');
-    const conferma = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const conferma = mocks.confirm.mockResolvedValue(false);
     renderizza(<Dashboard />, await nuovoRepository());
     await userEvent.click(await screen.findByRole('button', { name: 'Ripristina backup' }));
     await waitFor(() => expect(conferma).toHaveBeenCalled());
     expect(mocks.invoke).not.toHaveBeenCalled();
     expect(mocks.ricarica).not.toHaveBeenCalled();
-    conferma.mockRestore();
+    expect(sessionStorage.getItem('aiact.saltaPulizia')).toBeNull();
   });
 
   it('un ripristino rifiutato mostra l\'errore e non ricarica', async () => {
     mocks.open.mockResolvedValue('/tmp/testo.db');
     mocks.invoke.mockRejectedValue('Il file non è un database valido: file is not a database');
-    const conferma = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mocks.confirm.mockResolvedValue(true);
     renderizza(<Dashboard />, await nuovoRepository());
     await userEvent.click(await screen.findByRole('button', { name: 'Ripristina backup' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Il file non è un database valido');
     expect(mocks.ricarica).not.toHaveBeenCalled();
-    conferma.mockRestore();
+    expect(sessionStorage.getItem('aiact.saltaPulizia')).toBeNull();
   });
 });
 
@@ -104,6 +107,7 @@ describe('ErroreAvvio', () => {
     await userEvent.click(screen.getByRole('button', { name: "Ripristina l'ultimo backup" }));
     await waitFor(() => expect(mocks.ricarica).toHaveBeenCalled());
     expect(mocks.invoke).toHaveBeenCalledWith('ripristina_ultimo_backup', undefined);
+    expect(sessionStorage.getItem('aiact.saltaPulizia')).toBe('1');
   });
 
   it('senza backup mostra "Nessun backup disponibile." e non ricarica', async () => {
@@ -112,6 +116,7 @@ describe('ErroreAvvio', () => {
     await userEvent.click(screen.getByRole('button', { name: "Ripristina l'ultimo backup" }));
     expect(await screen.findByText('Nessun backup disponibile.')).toBeInTheDocument();
     expect(mocks.ricarica).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('aiact.saltaPulizia')).toBeNull();
   });
 
   it('senza funzione di ripristino (anteprima web) non mostra il pulsante', () => {
@@ -141,5 +146,17 @@ describe('avviso di backup all\'avvio', () => {
     );
     await screen.findByText(/Nessun cliente/);
     expect(screen.queryByText(/Backup automatico non riuscito/)).toBeNull();
+    expect(screen.queryByText(/Backup ripristinato/)).toBeNull();
+  });
+
+  it('App dopo un ripristino mostra «Backup ripristinato.» senza bloccare', async () => {
+    const repo = await nuovoRepository();
+    render(
+      <RepositoryProvider repository={repo}>
+        <App ripristinato />
+      </RepositoryProvider>,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('Backup ripristinato.');
+    expect(await screen.findByText(/Nessun cliente/)).toBeInTheDocument();
   });
 });
