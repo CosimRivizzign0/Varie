@@ -4,7 +4,7 @@ import { validaCliente } from '../../domain/cliente';
 import { calcolaRoadmap } from '../../domain/roadmap';
 import type { RegistroReport } from '../../domain/report';
 import { sintesiPerRoadmap, type SintesiValutazione } from '../../domain/valutazione';
-import { REGOLE } from '../../regole/attive';
+import { ERRORE_REGOLE, REGOLE } from '../../regole/attive';
 import { RUOLI, type Attivita, type Cliente, type SistemaAI } from '../../domain/tipi';
 import { ErroreValidazione } from '../../archivio/errori';
 import { salvaInCartella, scegliCartella } from '../../archivio/salvaFile';
@@ -62,6 +62,24 @@ interface EsitoGenerazione {
   creati: string[];
   esclusi: string[];
 }
+
+/**
+ * Nome non ancora usato in questa generazione: i file system di Windows e macOS non distinguono
+ * maiuscole e minuscole, quindi il confronto è senza maiuscole. In caso di collisione aggiunge `_2`, `_3`, …
+ * prima dell'estensione. L'ordine dei sistemi è stabile, quindi rigenerando nello stesso giorno
+ * si sovrascrivono gli stessi file.
+ */
+function nomeLibero(nome: string, usati: Set<string>): string {
+  const punto = nome.lastIndexOf('.');
+  const base = nome.slice(0, punto);
+  const estensione = nome.slice(punto);
+  let candidato = nome;
+  for (let n = 2; usati.has(candidato.toLowerCase()); n++) candidato = `${base}_${n}${estensione}`;
+  usati.add(candidato.toLowerCase());
+  return candidato;
+}
+
+const REGOLE_ASSENTI = ERRORE_REGOLE !== null || REGOLE === null;
 
 export function SchedaCliente() {
   const { id } = useParams();
@@ -177,7 +195,7 @@ function Contenuto({ id }: { id: string | undefined }) {
    * Ogni file scritto è registrato subito: dopo un errore quelli già scritti restano nel registro.
    */
   async function generaReport() {
-    if (!cliente || generazioneInCorso.current) return;
+    if (!cliente || REGOLE_ASSENTI || generazioneInCorso.current) return;
     generazioneInCorso.current = true;
     setGenerazione(true);
     setAvviso(null);
@@ -194,18 +212,19 @@ function Contenuto({ id }: { id: string | undefined }) {
       const elenco = await repo.elencaSistemi(cliente.id);
       const attive = await Promise.all(elenco.map((s) => repo.getValutazioneAttiva(s.id)));
       const oggi = new Date();
+      const usati = new Set<string>();
       for (const [i, s] of elenco.entries()) {
         const v = attive[i];
         if (!v || v.stato !== 'confermata' || !v.esito) {
           esito.esclusi.push(s.nome);
           continue;
         }
-        const nome = nomeFileWord(cliente, s, oggi);
+        const nome = nomeLibero(nomeFileWord(cliente, s, oggi), usati);
         await salvaInCartella(cartella, nome, await creaWord(datiReportSistema(studio, cliente, s, v, REGOLE)));
         await repo.registraReport({ clienteId: cliente.id, sistemaId: s.id, valutazioneId: v.id, tipo: 'word', nomeFile: nome });
         esito.creati.push(nome);
       }
-      const nome = nomeFileExcel(cliente, oggi);
+      const nome = nomeLibero(nomeFileExcel(cliente, oggi), usati);
       const inventario = datiInventario(studio, cliente, elenco, attive, REGOLE?.meta.versione ?? '');
       await salvaInCartella(cartella, nome, await creaExcel(inventario));
       await repo.registraReport({ clienteId: cliente.id, sistemaId: null, valutazioneId: null, tipo: 'excel', nomeFile: nome });
@@ -300,16 +319,23 @@ function Contenuto({ id }: { id: string | undefined }) {
           <div className="barra-azioni">
             <Link className="pulsante" to={`/clienti/${cliente.id}/sistemi/nuovo`}>Aggiungi sistema AI</Link>
             <button type="button" className="pulsante" onClick={confermaInventario}>Conferma inventario</button>
-            <button type="button" className="pulsante" disabled={generazione} onClick={generaReport}>Genera report</button>
+            <button type="button" className="pulsante" disabled={generazione || REGOLE_ASSENTI} onClick={generaReport}>Genera report</button>
             <button type="button" className="pulsante pulsante-pericolo" onClick={spostaNelCestino}>Sposta nel cestino</button>
           </div>
 
-          {generati && (
+          {REGOLE_ASSENTI && (
+            <p className="avviso">Report non disponibili: regole non caricate.</p>
+          )}
+          {generati && (generati.creati.length > 0 || generati.esclusi.length > 0) && (
             <div className="esito-report" role="status">
-              <p>File creati:</p>
-              <ul>
-                {generati.creati.map((n, i) => <li key={i}>{n}</li>)}
-              </ul>
+              {generati.creati.length > 0 && (
+                <>
+                  <p>File creati:</p>
+                  <ul>
+                    {generati.creati.map((n, i) => <li key={i}>{n}</li>)}
+                  </ul>
+                </>
+              )}
               {generati.esclusi.length > 0 && (
                 <ul>
                   {generati.esclusi.map((n, i) => (

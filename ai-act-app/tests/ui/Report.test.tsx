@@ -68,6 +68,13 @@ const OGGI = giornoDiDate(new Date());
 const WORD = `AI-Act_Acme-Srl_Chatbot_${OGGI}.docx`;
 const EXCEL = `AI-Act_Acme-Srl_inventario_${OGGI}.xlsx`;
 
+async function conferma(repo: Repository, sistemaId: string) {
+  const v = await repo.avviaValutazione(sistemaId, REGOLE!.meta.versione);
+  const esito = calcolaEsito(REGOLE!, BASE, 'deployer');
+  await repo.salvaRisposte(v.id, BASE, esito, REGOLE!.meta.versione);
+  return repo.confermaValutazione(v.id, esito.classe, null);
+}
+
 /** Cliente con «Chatbot» confermato e «Selezione CV» con valutazione solo avviata. */
 async function preparato() {
   const repo: Repository = await nuovoRepository();
@@ -151,6 +158,44 @@ describe('Genera report', () => {
     expect(within(esito).getByText('«Chatbot»: Non incluso: classificazione non confermata')).toBeInTheDocument();
     expect(creaWord).not.toHaveBeenCalled();
     expect((await repo.elencaReport(c.id)).map((r) => r.tipo)).toEqual(['excel']);
+  });
+
+  it('nomi Word uguali (anche solo nelle maiuscole): suffissi _2, _3 e registro coerente', async () => {
+    const repo = await nuovoRepository();
+    const c = await repo.creaCliente(clienteValido());
+    for (const nome of ['Chatbot', 'Chatbot', 'CHATBOT']) {
+      const s = await repo.creaSistema(c.id, sistema(nome));
+      await conferma(repo, s.id);
+    }
+    renderizza(rotte(), repo, `/clienti/${c.id}`);
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole('button', { name: 'Genera report' }));
+    const esito = await screen.findByRole('status');
+    await waitFor(() => expect(esito).toHaveTextContent(EXCEL));
+    const nomi = vi.mocked(salvaInCartella).mock.calls.map((c) => c[1]);
+    expect(nomi.map((n) => n.toLowerCase())).toEqual([
+      WORD.toLowerCase(),
+      WORD.replace('.docx', '_2.docx').toLowerCase(),
+      WORD.replace('.docx', '_3.docx').toLowerCase(),
+      EXCEL.toLowerCase(),
+    ]);
+    const registro = await repo.elencaReport(c.id);
+    const word = registro.filter((r) => r.tipo === 'word');
+    expect(word.map((r) => r.nomeFile).sort()).toEqual(nomi.slice(0, 3).sort());
+    expect(new Set(word.map((r) => r.sistemaId)).size).toBe(3);
+    for (const n of nomi) expect(within(esito).getByText(n)).toBeInTheDocument();
+    expect(await screen.findByText('4 di 4 report')).toBeInTheDocument();
+  });
+
+  it('errore prima di scrivere qualsiasi file: niente «File creati:»', async () => {
+    const { repo, c } = await preparato();
+    vi.mocked(creaWord).mockRejectedValue(new Error('Generazione fallita'));
+    renderizza(rotte(), repo, `/clienti/${c.id}`);
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole('button', { name: 'Genera report' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Generazione fallita');
+    expect(screen.queryByText('File creati:')).toBeNull();
+    expect(await repo.elencaReport(c.id)).toHaveLength(0);
   });
 
   it('cartella non scelta: nessun file e nessuna riga nel registro', async () => {
