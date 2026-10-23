@@ -2,6 +2,7 @@ import { validaCliente } from '../domain/cliente';
 import { validaSistema } from '../domain/sistema';
 import { isScaduto } from '../domain/cestino';
 import type { Attivita, Cliente, SistemaAI, TipoAttivita } from '../domain/tipi';
+import type { ImpostazioniStudio, RegistroReport } from '../domain/report';
 import type { Valutazione } from '../domain/valutazione';
 import type { EsitoValutazione } from '../regole/motore';
 import { ETICHETTE_CLASSE, type Classe, type Risposte } from '../regole/tipi';
@@ -47,6 +48,12 @@ export interface Repository {
   /** Salva risposte ed esito ricalcolato; aggiorna versione_regole alla versione con cui è stato calcolato l'esito. */
   salvaRisposte(id: string, risposte: Risposte, esito: EsitoValutazione, versioneRegole: string): Promise<Valutazione>;
   confermaValutazione(id: string, classe: Classe, nota: string | null): Promise<Valutazione>;
+  getImpostazioniStudio(): Promise<ImpostazioniStudio>;
+  /** Salva i dati dello studio (valori ripuliti con trim); non registra attività. */
+  salvaImpostazioniStudio(i: ImpostazioniStudio): Promise<void>;
+  registraReport(r: Omit<RegistroReport, 'id' | 'creatoIl'>): Promise<RegistroReport>;
+  /** Report del cliente, il più recente prima. */
+  elencaReport(clienteId: string): Promise<RegistroReport[]>;
 }
 
 export interface DipendenzeRepository {
@@ -104,6 +111,26 @@ function rigaAValutazione(r: Riga): Valutazione {
     modificatoIl: r.modificato_il as string,
     confermatoIl: r.confermato_il as string | null,
     sostituitaIl: r.sostituita_il as string | null,
+  };
+}
+
+const CHIAVI_STUDIO: Record<keyof ImpostazioniStudio, string> = {
+  nome: 'studio_nome',
+  indirizzo: 'studio_indirizzo',
+  piva: 'studio_piva',
+  email: 'studio_email',
+  telefono: 'studio_telefono',
+};
+
+function rigaAReport(r: Riga): RegistroReport {
+  return {
+    id: r.id as string,
+    clienteId: r.cliente_id as string,
+    sistemaId: r.sistema_id as string | null,
+    valutazioneId: r.valutazione_id as string | null,
+    tipo: r.tipo as RegistroReport['tipo'],
+    nomeFile: r.nome_file as string,
+    creatoIl: r.creato_il as string,
   };
 }
 
@@ -198,6 +225,7 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
   });
 
   const istruzioniCancellaCliente = (id: string): Istruzione[] => [
+    { sql: 'DELETE FROM report WHERE cliente_id = ?', params: [id] },
     istruzioniCancellaValutazioniCliente(id),
     { sql: 'DELETE FROM attivita WHERE cliente_id = ?', params: [id] },
     { sql: 'DELETE FROM sistemi WHERE cliente_id = ?', params: [id] },
@@ -343,6 +371,7 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
         );
         if (righe.length === 0) throw new ErroreNonTrovato('Elemento non trovato nel cestino');
         await driver.batch([
+          { sql: 'DELETE FROM report WHERE sistema_id = ?', params: [id] },
           { sql: 'DELETE FROM valutazioni WHERE sistema_id = ?', params: [id] },
           { sql: 'DELETE FROM sistemi WHERE id = ?', params: [id] },
         ]);
@@ -357,6 +386,7 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
       const istruzioni: Istruzione[] = [];
       for (const c of clientiScaduti) istruzioni.push(...istruzioniCancellaCliente(c.id));
       for (const s of sistemiScaduti) {
+        istruzioni.push({ sql: 'DELETE FROM report WHERE sistema_id = ?', params: [s.id] });
         istruzioni.push({ sql: 'DELETE FROM valutazioni WHERE sistema_id = ?', params: [s.id] });
         istruzioni.push({ sql: 'DELETE FROM sistemi WHERE id = ?', params: [s.id] });
       }
@@ -539,6 +569,57 @@ export function creaRepository(driver: SqlDriver, deps: DipendenzeRepository = {
         attivita(s.clienteId, 'modificato', descrizione, t, s.id),
       ]);
       return (await leggiValutazione(id)) as Valutazione;
+    },
+
+    async getImpostazioniStudio() {
+      const righe = await driver.select<Riga>('SELECT chiave, valore FROM impostazioni');
+      const valori = new Map(righe.map((r) => [r.chiave as string, r.valore as string]));
+      const leggi = (k: keyof ImpostazioniStudio) => valori.get(CHIAVI_STUDIO[k]) ?? '';
+      return {
+        nome: leggi('nome'),
+        indirizzo: leggi('indirizzo'),
+        piva: leggi('piva'),
+        email: leggi('email'),
+        telefono: leggi('telefono'),
+      };
+    },
+
+    async salvaImpostazioniStudio(i) {
+      await driver.batch(
+        (Object.keys(CHIAVI_STUDIO) as (keyof ImpostazioniStudio)[]).map((k) => ({
+          sql: 'INSERT OR REPLACE INTO impostazioni (chiave, valore) VALUES (?, ?)',
+          params: [CHIAVI_STUDIO[k], (i[k] ?? '').trim()],
+        })),
+      );
+    },
+
+    async registraReport(r) {
+      await attivo(r.clienteId);
+      let descrizione = 'Inventario Excel generato';
+      if (r.sistemaId !== null) {
+        const s = await leggiSistema(r.sistemaId);
+        if (!s || s.clienteId !== r.clienteId) throw new ErroreNonTrovato('Sistema non trovato');
+        descrizione = `Report Word di «${s.nome}» generato`;
+      }
+      const t = ora().toISOString();
+      const id = nuovoId();
+      await driver.batch([
+        {
+          sql: `INSERT INTO report (id, cliente_id, sistema_id, valutazione_id, tipo, nome_file, creato_il)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          params: [id, r.clienteId, r.sistemaId, r.valutazioneId, r.tipo, r.nomeFile, t],
+        },
+        attivita(r.clienteId, 'modificato', descrizione, t, r.sistemaId),
+      ]);
+      return { id, ...r, creatoIl: t };
+    },
+
+    async elencaReport(clienteId) {
+      const righe = await driver.select<Riga>(
+        'SELECT * FROM report WHERE cliente_id = ? ORDER BY creato_il DESC, rowid DESC',
+        [clienteId],
+      );
+      return righe.map(rigaAReport);
     },
   };
 }
