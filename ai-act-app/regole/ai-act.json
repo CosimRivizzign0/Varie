@@ -227,7 +227,7 @@
       "id": "vie_ncii",
       "sezione": "vietate",
       "testo": "Il sistema genera o manipola immagini, video o audio intimi o sessualmente espliciti di persone reali senza il loro consenso, oppure materiale pedopornografico?",
-      "aiuto": "Nuova pratica vietata introdotta dal Reg. (UE) 2026/1744, applicabile dal 02/12/2026. Per il fornitore il divieto vale se la generazione di tale materiale è lo scopo previsto del sistema o un suo risultato ragionevolmente prevedibile e riproducibile in assenza di misure di sicurezza adeguate; per il deployer, se usa il sistema allo scopo di generare o manipolare tale materiale. Esempio: app che «spogliano» digitalmente le persone ritratte in una foto.",
+      "aiuto": "Nuova pratica vietata introdotta dal Reg. (UE) 2026/1744, applicabile dal 02/12/2026. Per il fornitore il divieto vale se la generazione di tale materiale è lo scopo previsto del sistema o un suo risultato ragionevolmente prevedibile e riproducibile in assenza di misure di sicurezza adeguate; per il deployer, se usa il sistema allo scopo di generare o manipolare tale materiale. Esempio: app che «spogliano» digitalmente le persone ritratte in una foto. Per il fornitore rileva anche un risultato ottenibile senza modifiche tecniche significative. Non è manipolazione la modifica che non aumenta l'esposizione delle parti intime né altera la natura delle attività sessuali raffigurate (art. 5(1b)). Il consenso deve essere libero, specifico, informato, inequivocabile ed esplicito.",
       "riferimento": "Art. 5(1), lett. (ba) e (bb); art. 5(1a)-(1b)",
       "mostraSe": {
         "non": {
@@ -249,7 +249,7 @@
       "id": "ar1_componente_sicurezza",
       "sezione": "alto_rischio",
       "testo": "Il sistema è un prodotto, o il componente di sicurezza di un prodotto, disciplinato dalla normativa UE di armonizzazione dell'Allegato I, Sezione A (es. giocattoli, ascensori, dispositivi medici e diagnostici in vitro, apparecchiature radio, attrezzature a pressione, DPI) e soggetto a valutazione della conformità da parte di un organismo terzo?",
-      "aiuto": "Esempio: un software di IA che è esso stesso un dispositivo medico certificato da un organismo notificato. Le macchine (Reg. (UE) 2023/1230), dal Reg. (UE) 2026/1744, rientrano nella Sezione B: vedi la domanda successiva. Rispondi «No» se per quel prodotto basta l'autovalutazione del fabbricante.",
+      "aiuto": "Esempio: un software di IA che è esso stesso un dispositivo medico certificato da un organismo notificato. Le macchine (Reg. (UE) 2023/1230), dal Reg. (UE) 2026/1744, rientrano nella Sezione B: vedi la domanda successiva. Rispondi «No» se per quel prodotto basta l'autovalutazione del fabbricante. Non è componente di sicurezza un sistema usato solo per assistenza all'utente, ottimizzazione delle prestazioni, efficienza, automazione, comodità o controllo qualità non legati alla sicurezza; lo è comunque se un suo guasto metterebbe in pericolo salute e sicurezza (art. 6(1a)-(1b)). Rispondi «No» anche se l'organismo terzo interviene solo per rischi diversi da salute e sicurezza, es. spettro radio o interferenze elettromagnetiche (art. 6(1c)).",
       "riferimento": "Art. 6(1), All. I, Sez. A",
       "mostraSe": {
         "tutte": [
@@ -316,8 +316,8 @@
     {
       "id": "ar1_sezione_b",
       "sezione": "alto_rischio",
-      "testo": "Il sistema è un prodotto, o il componente di sicurezza di un prodotto, disciplinato dalla normativa dell'Allegato I, Sezione B (macchine, veicoli a motore e loro sicurezza, veicoli agricoli e forestali, veicoli a due o tre ruote, aviazione civile e sua sicurezza, equipaggiamento marittimo, sistemi ferroviari) e soggetto a valutazione della conformità da parte di un organismo terzo?",
-      "aiuto": "Esempio: il modulo di IA che arresta un macchinario industriale quando rileva una persona nella zona pericolosa. Per questi prodotti i requisiti dell'AI Act per i sistemi ad alto rischio non si applicano direttamente, ma tramite la normativa di settore (art. 2(2)).",
+      "testo": "Il sistema è un prodotto, o il componente di sicurezza di un prodotto, disciplinato dalla normativa dell'Allegato I, Sezione B (macchine, veicoli a motore e loro sicurezza, veicoli agricoli e forestali, veicoli a due o tre ruote e quadricicli, aviazione civile (inclusi aeromobili senza equipaggio), equipaggiamento marittimo, sistemi ferroviari) e soggetto a valutazione della conformità da parte di un organismo terzo (per i veicoli: soggetto a omologazione o a valutazione della conformità da parte di terzi)?",
+      "aiuto": "Esempio: il modulo di IA che arresta un macchinario industriale quando rileva una persona nella zona pericolosa. Per questi prodotti i requisiti dell'AI Act per i sistemi ad alto rischio non si applicano direttamente, ma tramite la normativa di settore (art. 2(2)). Non è componente di sicurezza un sistema usato solo per assistenza all'utente, ottimizzazione delle prestazioni, efficienza, automazione, comodità o controllo qualità non legati alla sicurezza; lo è comunque se un suo guasto metterebbe in pericolo salute e sicurezza (art. 6(1a)-(1b)). Rispondi «No» anche se l'organismo terzo interviene solo per rischi diversi da salute e sicurezza, es. spettro radio o interferenze elettromagnetiche (art. 6(1c)).",
       "riferimento": "Art. 6(1), art. 2(2), All. I, Sez. B",
       "mostraSe": {
         "tutte": [
@@ -1293,7 +1293,7 @@
       "id": "tra_interazione",
       "sezione": "trasparenza",
       "testo": "Il sistema è destinato a interagire direttamente con persone fisiche (es. chatbot, assistente vocale)?",
-      "aiuto": "Le persone devono essere informate che stanno interagendo con un sistema di IA, salvo che ciò sia evidente dal contesto per una persona ragionevolmente informata. L'obbligo grava sul fornitore. Se il cliente offre il chatbot con il proprio nome o marchio, anche basato su un modello di terzi, è di norma fornitore (art. 3(3)) e gli spettano gli obblighi dell'art. 50(1).",
+      "aiuto": "Le persone devono essere informate che stanno interagendo con un sistema di IA, salvo che ciò sia evidente dal contesto per una persona ragionevolmente informata. L'obbligo grava sul fornitore. Se il cliente offre il chatbot con il proprio nome o marchio, anche basato su un modello di terzi, è di norma fornitore (art. 3(3)): in tal caso indica «Fornitore» come ruolo del cliente nella scheda del sistema, così compaiono gli obblighi dell'art. 50(1).",
       "riferimento": "Art. 50(1)",
       "mostraSe": {
         "tutte": [
@@ -1814,6 +1814,100 @@
         ]
       },
       "stato": "bozza"
+    },
+    {
+      "id": "ruo_uso_autorita_pubbliche",
+      "sezione": "ruolo",
+      "testo": "Il sistema è destinato a essere usato da autorità pubbliche (o da istituzioni, organi e organismi dell'Unione)?",
+      "aiuto": "Conta la destinazione d'uso del sistema, non la natura del cliente: rispondi «Sì» anche se il cliente è un fornitore privato che lo vende alla pubblica amministrazione. Non rientrano i privati che forniscono servizi pubblici.",
+      "riferimento": "Art. 111(2), art. 49(3)",
+      "mostraSe": {
+        "almenoUna": [
+          {
+            "risposta": "ar1_componente_sicurezza",
+            "uguale": "si"
+          },
+          {
+            "risposta": "ar1_sezione_b",
+            "uguale": "si"
+          },
+          {
+            "tutte": [
+              {
+                "almenoUna": [
+                  {
+                    "risposta": "ar3_biometria",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_infrastrutture_critiche",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_istruzione",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_occupazione",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_servizi_pubblici",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_servizi_credito_assicurazioni",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_contrasto",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_migrazione",
+                    "uguale": "si"
+                  },
+                  {
+                    "risposta": "ar3_giustizia_democrazia",
+                    "uguale": "si"
+                  }
+                ]
+              },
+              {
+                "almenoUna": [
+                  {
+                    "non": {
+                      "almenoUna": [
+                        {
+                          "risposta": "der_compito_procedurale",
+                          "uguale": "si"
+                        },
+                        {
+                          "risposta": "der_migliora_attivita_umana",
+                          "uguale": "si"
+                        },
+                        {
+                          "risposta": "der_rileva_schemi",
+                          "uguale": "si"
+                        },
+                        {
+                          "risposta": "der_compito_preparatorio",
+                          "uguale": "si"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "risposta": "der_profilazione",
+                    "uguale": "si"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "stato": "bozza"
     }
   ],
   "esiti": [
@@ -2140,8 +2234,104 @@
     {
       "id": "tr_interazione",
       "quando": {
-        "risposta": "tra_interazione",
-        "uguale": "si"
+        "tutte": [
+          {
+            "risposta": "tra_interazione",
+            "uguale": "si"
+          },
+          {
+            "non": {
+              "tutte": [
+                {
+                  "risposta": "ar1_sezione_b",
+                  "uguale": "si"
+                },
+                {
+                  "non": {
+                    "risposta": "ar1_componente_sicurezza",
+                    "uguale": "si"
+                  }
+                },
+                {
+                  "non": {
+                    "tutte": [
+                      {
+                        "almenoUna": [
+                          {
+                            "risposta": "ar3_biometria",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_infrastrutture_critiche",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_istruzione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_occupazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_pubblici",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_credito_assicurazioni",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_contrasto",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_migrazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_giustizia_democrazia",
+                            "uguale": "si"
+                          }
+                        ]
+                      },
+                      {
+                        "non": {
+                          "tutte": [
+                            {
+                              "almenoUna": [
+                                {
+                                  "risposta": "der_compito_procedurale",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_migliora_attivita_umana",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_rileva_schemi",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_compito_preparatorio",
+                                  "uguale": "si"
+                                }
+                              ]
+                            },
+                            {
+                              "risposta": "der_profilazione",
+                              "uguale": "no"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
       },
       "motivazione": "Il sistema interagisce direttamente con persone fisiche: le persone devono sapere che parlano con un sistema di IA.",
       "riferimento": "Art. 50(1)",
@@ -2150,8 +2340,104 @@
     {
       "id": "tr_contenuti_sintetici",
       "quando": {
-        "risposta": "tra_contenuti_sintetici",
-        "uguale": "si"
+        "tutte": [
+          {
+            "risposta": "tra_contenuti_sintetici",
+            "uguale": "si"
+          },
+          {
+            "non": {
+              "tutte": [
+                {
+                  "risposta": "ar1_sezione_b",
+                  "uguale": "si"
+                },
+                {
+                  "non": {
+                    "risposta": "ar1_componente_sicurezza",
+                    "uguale": "si"
+                  }
+                },
+                {
+                  "non": {
+                    "tutte": [
+                      {
+                        "almenoUna": [
+                          {
+                            "risposta": "ar3_biometria",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_infrastrutture_critiche",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_istruzione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_occupazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_pubblici",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_credito_assicurazioni",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_contrasto",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_migrazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_giustizia_democrazia",
+                            "uguale": "si"
+                          }
+                        ]
+                      },
+                      {
+                        "non": {
+                          "tutte": [
+                            {
+                              "almenoUna": [
+                                {
+                                  "risposta": "der_compito_procedurale",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_migliora_attivita_umana",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_rileva_schemi",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_compito_preparatorio",
+                                  "uguale": "si"
+                                }
+                              ]
+                            },
+                            {
+                              "risposta": "der_profilazione",
+                              "uguale": "no"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
       },
       "motivazione": "Il sistema genera contenuti sintetici: gli output vanno marcati come generati artificialmente.",
       "riferimento": "Art. 50(2)",
@@ -2160,8 +2446,104 @@
     {
       "id": "tr_emozioni_biometria",
       "quando": {
-        "risposta": "tra_emozioni_biometria",
-        "uguale": "si"
+        "tutte": [
+          {
+            "risposta": "tra_emozioni_biometria",
+            "uguale": "si"
+          },
+          {
+            "non": {
+              "tutte": [
+                {
+                  "risposta": "ar1_sezione_b",
+                  "uguale": "si"
+                },
+                {
+                  "non": {
+                    "risposta": "ar1_componente_sicurezza",
+                    "uguale": "si"
+                  }
+                },
+                {
+                  "non": {
+                    "tutte": [
+                      {
+                        "almenoUna": [
+                          {
+                            "risposta": "ar3_biometria",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_infrastrutture_critiche",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_istruzione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_occupazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_pubblici",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_credito_assicurazioni",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_contrasto",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_migrazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_giustizia_democrazia",
+                            "uguale": "si"
+                          }
+                        ]
+                      },
+                      {
+                        "non": {
+                          "tutte": [
+                            {
+                              "almenoUna": [
+                                {
+                                  "risposta": "der_compito_procedurale",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_migliora_attivita_umana",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_rileva_schemi",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_compito_preparatorio",
+                                  "uguale": "si"
+                                }
+                              ]
+                            },
+                            {
+                              "risposta": "der_profilazione",
+                              "uguale": "no"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
       },
       "motivazione": "Il sistema riconosce emozioni o effettua categorizzazione biometrica: le persone esposte vanno informate.",
       "riferimento": "Art. 50(3)",
@@ -2170,8 +2552,104 @@
     {
       "id": "tr_deepfake",
       "quando": {
-        "risposta": "tra_deepfake",
-        "uguale": "si"
+        "tutte": [
+          {
+            "risposta": "tra_deepfake",
+            "uguale": "si"
+          },
+          {
+            "non": {
+              "tutte": [
+                {
+                  "risposta": "ar1_sezione_b",
+                  "uguale": "si"
+                },
+                {
+                  "non": {
+                    "risposta": "ar1_componente_sicurezza",
+                    "uguale": "si"
+                  }
+                },
+                {
+                  "non": {
+                    "tutte": [
+                      {
+                        "almenoUna": [
+                          {
+                            "risposta": "ar3_biometria",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_infrastrutture_critiche",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_istruzione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_occupazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_pubblici",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_credito_assicurazioni",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_contrasto",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_migrazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_giustizia_democrazia",
+                            "uguale": "si"
+                          }
+                        ]
+                      },
+                      {
+                        "non": {
+                          "tutte": [
+                            {
+                              "almenoUna": [
+                                {
+                                  "risposta": "der_compito_procedurale",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_migliora_attivita_umana",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_rileva_schemi",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_compito_preparatorio",
+                                  "uguale": "si"
+                                }
+                              ]
+                            },
+                            {
+                              "risposta": "der_profilazione",
+                              "uguale": "no"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
       },
       "motivazione": "Il sistema produce deepfake: va reso noto che il contenuto è generato o manipolato artificialmente.",
       "riferimento": "Art. 50(4)",
@@ -2180,8 +2658,104 @@
     {
       "id": "tr_testi_pubblici",
       "quando": {
-        "risposta": "tra_testi_pubblici",
-        "uguale": "si"
+        "tutte": [
+          {
+            "risposta": "tra_testi_pubblici",
+            "uguale": "si"
+          },
+          {
+            "non": {
+              "tutte": [
+                {
+                  "risposta": "ar1_sezione_b",
+                  "uguale": "si"
+                },
+                {
+                  "non": {
+                    "risposta": "ar1_componente_sicurezza",
+                    "uguale": "si"
+                  }
+                },
+                {
+                  "non": {
+                    "tutte": [
+                      {
+                        "almenoUna": [
+                          {
+                            "risposta": "ar3_biometria",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_infrastrutture_critiche",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_istruzione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_occupazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_pubblici",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_servizi_credito_assicurazioni",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_contrasto",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_migrazione",
+                            "uguale": "si"
+                          },
+                          {
+                            "risposta": "ar3_giustizia_democrazia",
+                            "uguale": "si"
+                          }
+                        ]
+                      },
+                      {
+                        "non": {
+                          "tutte": [
+                            {
+                              "almenoUna": [
+                                {
+                                  "risposta": "der_compito_procedurale",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_migliora_attivita_umana",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_rileva_schemi",
+                                  "uguale": "si"
+                                },
+                                {
+                                  "risposta": "der_compito_preparatorio",
+                                  "uguale": "si"
+                                }
+                              ]
+                            },
+                            {
+                              "risposta": "der_profilazione",
+                              "uguale": "no"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
       },
       "motivazione": "Il sistema genera testi pubblicati per informare su questioni di interesse pubblico: va dichiarata la generazione artificiale, salvo controllo editoriale umano.",
       "riferimento": "Art. 50(4), secondo comma",
@@ -2203,7 +2777,98 @@
         "fornitore",
         "deployer"
       ],
-      "quando": null,
+      "quando": {
+        "non": {
+          "tutte": [
+            {
+              "risposta": "ar1_sezione_b",
+              "uguale": "si"
+            },
+            {
+              "non": {
+                "risposta": "ar1_componente_sicurezza",
+                "uguale": "si"
+              }
+            },
+            {
+              "non": {
+                "tutte": [
+                  {
+                    "almenoUna": [
+                      {
+                        "risposta": "ar3_biometria",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_infrastrutture_critiche",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_istruzione",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_occupazione",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_servizi_pubblici",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_servizi_credito_assicurazioni",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_contrasto",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_migrazione",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ar3_giustizia_democrazia",
+                        "uguale": "si"
+                      }
+                    ]
+                  },
+                  {
+                    "non": {
+                      "tutte": [
+                        {
+                          "almenoUna": [
+                            {
+                              "risposta": "der_compito_procedurale",
+                              "uguale": "si"
+                            },
+                            {
+                              "risposta": "der_migliora_attivita_umana",
+                              "uguale": "si"
+                            },
+                            {
+                              "risposta": "der_rileva_schemi",
+                              "uguale": "si"
+                            },
+                            {
+                              "risposta": "der_compito_preparatorio",
+                              "uguale": "si"
+                            }
+                          ]
+                        },
+                        {
+                          "risposta": "der_profilazione",
+                          "uguale": "no"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
       "testo": "Adottare misure per sostenere lo sviluppo dell'alfabetizzazione in materia di IA del personale e delle altre persone che si occupano del funzionamento e dell'uso dei sistemi di IA per conto dell'organizzazione, tenendo conto delle loro conoscenze tecniche, esperienza, istruzione e formazione, del contesto d'uso e delle persone su cui i sistemi sono usati. Non è richiesto di garantire un livello specifico di alfabetizzazione di ciascuna persona.",
       "riferimento": "Art. 4(1)",
       "dataApplicazione": "2025-02-02",
@@ -2794,7 +3459,7 @@
           }
         ]
       },
-      "testo": "Prima del primo uso, svolgere la valutazione d'impatto sui diritti fondamentali (FRIA): processi in cui il sistema è usato, periodo e frequenza d'uso, categorie di persone interessate, rischi specifici di danno, misure di sorveglianza umana e misure da adottare se i rischi si concretizzano; notificarne i risultati all'autorità di vigilanza del mercato. Obbligatoria per enti pubblici e privati che forniscono servizi pubblici (aree dell'Allegato III tranne il punto 2) e per i sistemi di merito creditizio e assicurazioni vita e malattia (All. III, p. 5(b), 5(c)). Se la valutazione d'impatto sulla protezione dei dati (art. 35 GDPR) copre già alcuni elementi, si può rinviare alle relative sezioni (art. 27(4)).",
+      "testo": "Prima del primo uso, svolgere la valutazione d'impatto sui diritti fondamentali (FRIA): processi in cui il sistema è usato, periodo e frequenza d'uso, categorie di persone interessate, rischi specifici di danno, misure di sorveglianza umana e misure da adottare se i rischi si concretizzano; notificarne i risultati all'autorità di vigilanza del mercato. Obbligatoria per enti pubblici e privati che forniscono servizi pubblici (aree dell'Allegato III tranne il punto 2) e per i sistemi di merito creditizio e assicurazioni vita e malattia (All. III, p. 5(b), 5(c)). Se la valutazione d'impatto sulla protezione dei dati (art. 35 GDPR) copre già alcuni elementi, si può rinviare alle relative sezioni o includerne le parti pertinenti (art. 27(4)).",
       "riferimento": "Art. 27",
       "dataApplicazione": "2027-12-02",
       "stato": "bozza"
@@ -4684,7 +5349,7 @@
           }
         ]
       },
-      "testo": "Sottoporre il sistema alla procedura di valutazione della conformità applicabile (controllo interno o intervento di un organismo notificato, secondo i casi) prima dell'immissione sul mercato o della messa in servizio.",
+      "testo": "Sottoporre il sistema alla procedura di valutazione della conformità applicabile (controllo interno o intervento di un organismo notificato, secondo i casi) prima dell'immissione sul mercato o della messa in servizio. Se il sistema rientra anche nell'Allegato I, Sezione A, si segue la procedura di valutazione prevista da quella normativa (art. 43(3)).",
       "riferimento": "Art. 43",
       "dataApplicazione": "2027-12-02",
       "stato": "bozza"
@@ -5073,7 +5738,7 @@
       "quando": {
         "tutte": [
           {
-            "risposta": "ruo_ente_pubblico",
+            "risposta": "ruo_uso_autorita_pubbliche",
             "uguale": "si"
           },
           {
@@ -5149,10 +5814,46 @@
                 }
               }
             ]
+          },
+          {
+            "almenoUna": [
+              {
+                "risposta": "ar3_biometria",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_istruzione",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_occupazione",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_servizi_pubblici",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_servizi_credito_assicurazioni",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_contrasto",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_migrazione",
+                "uguale": "si"
+              },
+              {
+                "risposta": "ar3_giustizia_democrazia",
+                "uguale": "si"
+              }
+            ]
           }
         ]
       },
-      "testo": "Solo per deployer che sono autorità pubbliche, istituzioni, organi o organismi dell'Unione (non per privati che forniscono servizi pubblici): prima di usare il sistema, registrarsi, selezionare il sistema e registrarne l'uso nella banca dati UE. Non si applica ai sistemi dell'Allegato III, punto 2 (infrastrutture critiche).",
+      "testo": "Prima di mettere in servizio o usare il sistema, le autorità pubbliche, le istituzioni, organi e organismi dell'Unione e chi agisce per loro conto devono registrarsi, selezionare il sistema e registrarne l'uso nella banca dati UE (esclusi i sistemi dell'Allegato III, punto 2). L'art. 49 si applica formalmente dal 02/08/2026, ma l'obbligo sorge con la classificazione ai sensi dell'art. 6(2), applicabile dal 02/12/2027.",
       "riferimento": "Art. 49(3)",
       "dataApplicazione": "2027-12-02",
       "stato": "bozza"
@@ -5168,10 +5869,10 @@
         "deployer"
       ],
       "quando": {
-        "risposta": "ruo_ente_pubblico",
+        "risposta": "ruo_uso_autorita_pubbliche",
         "uguale": "si"
       },
-      "testo": "Solo se il sistema è destinato a essere usato da autorità pubbliche (non da privati che forniscono servizi pubblici): deve comunque essere adeguato ai requisiti e agli obblighi del Regolamento entro il 02/08/2030.",
+      "testo": "Solo per sistemi destinati a essere usati da autorità pubbliche e già immessi sul mercato o messi in servizio prima della data di applicazione del Capo III (02/12/2027 per l'Allegato III, 02/08/2028 per l'Allegato I): fornitori e deployer devono adeguarli ai requisiti e agli obblighi del Regolamento entro il 02/08/2030, anche in assenza di modifiche significative. Per i sistemi immessi o messi in servizio dopo tali date gli obblighi si applicano dalle date ordinarie.",
       "riferimento": "Art. 111(2)",
       "dataApplicazione": "2030-08-02",
       "stato": "bozza"
@@ -5928,21 +6629,13 @@
       "soloSeTrasparenza": false,
       "ruoli": [
         "fornitore",
-        "deployer",
-        "importatore",
-        "distributore"
+        "importatore"
       ],
       "quando": {
         "tutte": [
           {
             "risposta": "ar1_sezione_b",
             "uguale": "si"
-          },
-          {
-            "non": {
-              "risposta": "ar1_componente_sicurezza",
-              "uguale": "si"
-            }
           },
           {
             "non": {
@@ -6022,7 +6715,7 @@
           }
         ]
       },
-      "testo": "Rispettare i requisiti per i sistemi di IA ad alto rischio come integrati nella normativa di settore dell'Allegato I, Sezione B (es. Reg. (UE) 2023/1230 macchine, Reg. (UE) 2018/858 veicoli). Gli obblighi del Capo III dell'AI Act non si applicano direttamente (art. 2(2)): verificare tempi e contenuti nella normativa di settore.",
+      "testo": "Rispettare i requisiti per i sistemi di IA ad alto rischio come integrati nella normativa di settore dell'Allegato I, Sezione B (es. Reg. (UE) 2023/1230 macchine, Reg. (UE) 2018/858 veicoli). Gli obblighi del Capo III dell'AI Act non si applicano direttamente (art. 2(2)). Per le macchine i requisiti saranno inseriti nell'Allegato III del Reg. (UE) 2023/1230 con atti delegati applicabili entro il 02/08/2028; per le altre normative della Sezione B i tempi dipendono dagli atti della Commissione previsti dagli artt. 102–109. Per questo sistema non si applicano neppure gli artt. 4 e 50 dell'AI Act (art. 2(2)), che restano applicabili agli altri sistemi di IA dell'organizzazione.",
       "riferimento": "Art. 2(2), All. I, Sez. B",
       "dataApplicazione": "2028-08-02",
       "stato": "bozza"
@@ -6052,7 +6745,7 @@
         "fornitore"
       ],
       "quando": null,
-      "testo": "Registrare sé stesso e il sistema nella banca dati UE prima dell'immissione sul mercato o della messa in servizio, anche se si è concluso che il sistema non è ad alto rischio ai sensi dell'art. 6(3). I contenuti da registrare sono semplificati (Allegato VIII, sezione B, punti 7 e 9 soppressi dal Reg. (UE) 2026/1744).",
+      "testo": "Registrare sé stesso e il sistema nella banca dati UE prima dell'immissione sul mercato o della messa in servizio, anche se si è concluso che il sistema non è ad alto rischio ai sensi dell'art. 6(3). I contenuti da registrare sono semplificati (Allegato VIII, sezione B, punti 7 e 9 soppressi dal Reg. (UE) 2026/1744). L'art. 49 si applica formalmente dal 02/08/2026, ma l'obbligo sorge con la classificazione ai sensi dell'art. 6(3), applicabile dal 02/12/2027.",
       "riferimento": "Art. 49(2)",
       "dataApplicazione": "2027-12-02",
       "stato": "bozza"

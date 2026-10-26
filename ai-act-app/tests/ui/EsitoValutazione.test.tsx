@@ -47,6 +47,7 @@ const BASE: Risposte = {
   ruo_marchio: 'no',
   ruo_modifica: 'no',
   ruo_ente_pubblico: 'no',
+  ruo_uso_autorita_pubbliche: 'no',
 };
 
 const sistema = {

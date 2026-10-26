@@ -120,6 +120,7 @@ describe('SchedaSistema esistente', () => {
       der_compito_preparatorio: 'no', der_profilazione: 'no',
       tra_interazione: 'no', tra_contenuti_sintetici: 'no', tra_emozioni_biometria: 'no', tra_deepfake: 'no',
       tra_testi_pubblici: 'no', ruo_marchio: 'no', ruo_modifica: 'no', ruo_ente_pubblico: 'no',
+      ruo_uso_autorita_pubbliche: 'no',
     };
 
     async function confermato() {
