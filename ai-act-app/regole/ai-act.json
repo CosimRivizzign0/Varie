@@ -5152,7 +5152,7 @@
           }
         ]
       },
-      "testo": "Prima di usare il sistema, registrarsi, selezionare il sistema e registrarne l'uso nella banca dati UE (deployer che sono autorità pubbliche, istituzioni, organi o organismi dell'Unione). Non si applica ai sistemi dell'Allegato III, punto 2 (infrastrutture critiche).",
+      "testo": "Solo per deployer che sono autorità pubbliche, istituzioni, organi o organismi dell'Unione (non per privati che forniscono servizi pubblici): prima di usare il sistema, registrarsi, selezionare il sistema e registrarne l'uso nella banca dati UE. Non si applica ai sistemi dell'Allegato III, punto 2 (infrastrutture critiche).",
       "riferimento": "Art. 49(3)",
       "dataApplicazione": "2027-12-02",
       "stato": "bozza"
@@ -5171,7 +5171,7 @@
         "risposta": "ruo_ente_pubblico",
         "uguale": "si"
       },
-      "testo": "I sistemi ad alto rischio destinati a essere usati da autorità pubbliche devono comunque essere adeguati ai requisiti e agli obblighi del Regolamento entro il 02/08/2030.",
+      "testo": "Solo se il sistema è destinato a essere usato da autorità pubbliche (non da privati che forniscono servizi pubblici): deve comunque essere adeguato ai requisiti e agli obblighi del Regolamento entro il 02/08/2030.",
       "riferimento": "Art. 111(2)",
       "dataApplicazione": "2030-08-02",
       "stato": "bozza"
