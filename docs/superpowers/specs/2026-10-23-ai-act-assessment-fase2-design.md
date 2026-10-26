@@ -28,10 +28,10 @@ Il consulente conferma la classificazione o la modifica con motivazione obbligat
 - Report Word/Excel (Fase 2b). Analisi documentale con LLM (Fase 3).
 - Editor delle regole nell'app. Gap analysis per obbligo.
 
-## 2. Quadro normativo e date (da confermare sul testo in GU)
+## 2. Quadro normativo e date (verificato sul testo ufficiale il 2026-10-26)
 
-Fonte: sintesi di fonti secondarie consultate il 2026-10-23; il testo del Reg. 2026/1744
-in GU non è stato letto direttamente. **Prerequisito del §9 punto 1.**
+Fonte: testo del Reg. (UE) 2026/1744 su EUR-Lex (https://eur-lex.europa.eu/eli/reg/2026/1744/oj/eng),
+verificato il 2026-10-26 (regole v1.1.0). Date della tabella confermate.
 
 | Elemento | Data di applicazione |
 |---|---|
@@ -40,11 +40,12 @@ in GU non è stato letto direttamente. **Prerequisito del §9 punto 1.**
 | Art. 5 nuova pratica (materiale intimo non consensuale / CSAM) | 02/12/2026 |
 | Art. 50 trasparenza | 02/08/2026 (marcatura leggibile dalle macchine: 02/12/2026 per sistemi immessi prima del 02/08/2026) |
 | Alto rischio Allegato III | 02/12/2027 |
-| Alto rischio Allegato I | 02/08/2028 |
+| Alto rischio Allegato I (Sez. A; Sez. B tramite la normativa di settore, art. 2(2)) | 02/08/2028 |
 
-Punti **da verificare** sul testo ufficiale (marcati `da_verificare` nelle regole):
-art. 4 (riformulazione dell'obbligo di alfabetizzazione), art. 49(2) (registrazione dei
-sistemi che usano la deroga dell'art. 6(3)), numerazione delle nuove lettere dell'art. 5.
+Esito della verifica (voci aggiornate in `bozza`): art. 4 riformulato (misure per sostenere
+l'alfabetizzazione, art. 4(1)); art. 49(2) invariato, con contenuti da registrare semplificati
+(All. VIII, sez. B, punti 7 e 9 soppressi); nuova pratica vietata alle lettere (ba) e (bb)
+dell'art. 5(1) e art. 5(1a)-(1b); macchine spostate nell'Allegato I, Sezione B.
 
 La Fase 1 dava per data alto rischio il 02/08/2026: superata da questa tabella.
 
@@ -81,7 +82,7 @@ Con `da_definire` gli obblighi sono mostrati per tutti i ruoli, con avviso.
 | `alto_rischio` | deployer | art. 26; art. 27 FRIA solo se ente pubblico / servizio pubblico o All. III p. 5(b)(c); art. 86 |
 | `alto_rischio` | fornitore | artt. 9–17, 43, 47, 48, 49, 72, 73 |
 | `alto_rischio` | importatore / distributore | art. 23 / art. 24 |
-| `non_alto_rischio_deroga` | fornitore | documentazione art. 6(4); art. 49(2) (`da_verificare`) |
+| `non_alto_rischio_deroga` | fornitore | documentazione art. 6(4); art. 49(2) |
 | flag `trasparenza` | fornitore / deployer | art. 50 parr. pertinenti |
 
 La domanda "ente pubblico o servizio pubblico" compare solo per deployer con classe

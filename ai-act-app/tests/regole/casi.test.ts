@@ -22,6 +22,7 @@ const NESSUN_RISCHIO: Risposte = {
   vie_identificazione_tempo_reale: 'no',
   vie_ncii: 'no',
   ar1_componente_sicurezza: 'no',
+  ar1_sezione_b: 'no',
   ar3_biometria: 'no',
   ar3_infrastrutture_critiche: 'no',
   ar3_istruzione: 'no',
@@ -58,7 +59,7 @@ const OBBLIGHI_FORNITORE_ALTO_RISCHIO = [
   'ob_art72_monitoraggio', 'ob_art73_incidenti',
 ];
 
-describe('casi di prova sulle regole v1.0.0 (spec §8)', () => {
+describe('casi di prova sulle regole v1.1.0 (spec §8)', () => {
   it('le risposte di partenza coprono esattamente le domande del file', () => {
     expect(Object.keys(NESSUN_RISCHIO).sort()).toEqual(REGOLE!.domande.map((d) => d.id).sort());
   });
@@ -173,14 +174,27 @@ describe('casi di prova sulle regole v1.0.0 (spec §8)', () => {
     expect(idObblighi(e)).toEqual(['ob_art4_alfabetizzazione']);
   });
 
-  it('12. componente di sicurezza di un macchinario → alto rischio dal 02/08/2028', () => {
+  it('12. componente di sicurezza di un macchinario (All. I, Sez. B) → alto rischio tramite la normativa di settore, dal 02/08/2028', () => {
+    const e = esito({ ar1_componente_sicurezza: 'no', ar1_sezione_b: 'si' }, 'fornitore');
+    expect(e.classe).toBe('alto_rischio');
+    expect(e.ruoloEffettivo).toBe('fornitore');
+    expect(e.completo).toBe(true);
+    expect(e.dataApplicazioneClasse).toBe('2028-08-02');
+    expect(e.motivazione.map((m) => m.riferimento)).toEqual(['Art. 6(1), art. 2(2), All. I, Sez. B']);
+    // Il Capo III non si applica direttamente (art. 2(2)): solo l'obbligo di rispettare la normativa di settore.
+    expect(idObblighi(e)).toEqual(['ob_art4_alfabetizzazione', 'ob_all1b_normativa_settore']);
+    expect(e.obblighi.find((o) => o.id === 'ob_all1b_normativa_settore')!.dataApplicazione).toBe('2028-08-02');
+  });
+
+  it('12b. dispositivo medico certificato da organismo notificato (All. I, Sez. A) → alto rischio dal 02/08/2028', () => {
     const e = esito({ ar1_componente_sicurezza: 'si' }, 'fornitore');
     expect(e.classe).toBe('alto_rischio');
     expect(e.ruoloEffettivo).toBe('fornitore');
     expect(e.dataApplicazioneClasse).toBe('2028-08-02');
-    expect(e.motivazione.map((m) => m.riferimento)).toEqual(['Art. 6(1), All. I']);
+    expect(e.motivazione.map((m) => m.riferimento)).toEqual(['Art. 6(1), All. I, Sez. A']);
     expect(idObblighi(e)).toEqual(expect.arrayContaining(OBBLIGHI_FORNITORE_ALTO_RISCHIO.map((id) => `${id}_all1`)));
     expect(idObblighi(e)).not.toContain('ob_art9_gestione_rischi');
+    expect(idObblighi(e)).not.toContain('ob_all1b_normativa_settore');
     // La registrazione nella banca dati UE (art. 49(1)) riguarda i sistemi dell'Allegato III.
     expect(idObblighi(e)).not.toContain('ob_art49_registrazione');
     // Tutti gli obblighi di alto rischio si applicano dal 02/08/2028.
@@ -212,6 +226,33 @@ describe('date e ambito: casi aggiuntivi', () => {
     expect(idObblighi(e)).toEqual(expect.arrayContaining(['ob_art26_deployer_all1', 'ob_art26_7_lavoratori_all1']));
     expect(idObblighi(e)).not.toContain('ob_art86_spiegazione');
     expect(idObblighi(e)).not.toContain('ob_art27_fria');
+  });
+
+  it('Allegato I, Sez. A e Sez. B insieme → prevale la Sez. A, senza l\'obbligo della normativa di settore', () => {
+    const e = esito({ ar1_componente_sicurezza: 'si', ar1_sezione_b: 'si' }, 'deployer');
+    expect(e.classe).toBe('alto_rischio');
+    expect(e.motivazione.map((m) => m.riferimento)).toEqual(['Art. 6(1), All. I, Sez. A']);
+    expect(idObblighi(e)).toEqual(expect.arrayContaining(['ob_art26_deployer_all1']));
+    expect(idObblighi(e)).not.toContain('ob_all1b_normativa_settore');
+  });
+
+  it('Allegato I, Sez. B + Allegato III senza deroga → obblighi Allegato III, senza l\'obbligo della normativa di settore', () => {
+    const e = esito({ ar1_sezione_b: 'si', ar3_infrastrutture_critiche: 'si' }, 'fornitore');
+    expect(e.classe).toBe('alto_rischio');
+    expect(e.dataApplicazioneClasse).toBe('2027-12-02');
+    expect(idObblighi(e)).toEqual(expect.arrayContaining([...OBBLIGHI_FORNITORE_ALTO_RISCHIO, 'ob_art49_registrazione']));
+    expect(idObblighi(e)).not.toContain('ob_all1b_normativa_settore');
+  });
+
+  it('Allegato I, Sez. B + Allegato III in deroga → alto rischio per la Sez. B, obbligo della normativa di settore', () => {
+    const e = esito({
+      ar1_sezione_b: 'si', ar3_occupazione: 'si', der_compito_preparatorio: 'si', der_profilazione: 'no',
+    }, 'fornitore');
+    expect(e.classe).toBe('alto_rischio');
+    expect(e.dataApplicazioneClasse).toBe('2028-08-02');
+    expect(idObblighi(e)).toContain('ob_all1b_normativa_settore');
+    expect(idObblighi(e).some((id) => id.endsWith('_all1'))).toBe(false);
+    expect(idObblighi(e)).not.toContain('ob_art9_gestione_rischi');
   });
 
   it('impresa che offre ai consumatori un generatore di immagini → non esclusa: minimo + trasparenza', () => {
@@ -249,5 +290,87 @@ describe('«Non so» sulle domande che ne mostrano altre', () => {
 
   it('con tutte le condizioni di deroga a «No» la domanda sulla profilazione resta nascosta', () => {
     expect(visibili({ ar3_istruzione: 'si' })).not.toContain('der_profilazione');
+  });
+});
+
+describe('autorità pubbliche (artt. 49(3) e 111(2))', () => {
+  it('ente pubblico deployer di un sistema Allegato III → registrazione dell\'uso (art. 49(3)) e termine del 02/08/2030', () => {
+    const e = esito({ ar3_occupazione: 'si', ruo_ente_pubblico: 'si' }, 'deployer');
+    expect(e.classe).toBe('alto_rischio');
+    expect(idObblighi(e)).toEqual(expect.arrayContaining([
+      'ob_art26_deployer', 'ob_art27_fria', 'ob_art49_3_deployer_pubblico', 'ob_art111_2_autorita_pubbliche',
+    ]));
+    const o = (id: string) => e.obblighi.find((x) => x.id === id)!;
+    expect(o('ob_art49_3_deployer_pubblico').dataApplicazione).toBe('2027-12-02');
+    expect(o('ob_art49_3_deployer_pubblico').riferimento).toBe('Art. 49(3)');
+    expect(o('ob_art111_2_autorita_pubbliche').dataApplicazione).toBe('2030-08-02');
+    expect(o('ob_art111_2_autorita_pubbliche').riferimento).toBe('Art. 111(2)');
+  });
+
+  it('ente pubblico fornitore → termine del 02/08/2030 ma non la registrazione del deployer', () => {
+    const e = esito({ ar3_occupazione: 'si', ruo_ente_pubblico: 'si', ruo_marchio: 'si' }, 'distributore');
+    expect(e.ruoloEffettivo).toBe('fornitore');
+    expect(idObblighi(e)).toContain('ob_art111_2_autorita_pubbliche');
+    expect(idObblighi(e)).not.toContain('ob_art49_3_deployer_pubblico');
+  });
+
+  it('senza ente pubblico nessuno dei due obblighi', () => {
+    const e = esito({ ar3_occupazione: 'si' }, 'deployer');
+    expect(idObblighi(e)).not.toContain('ob_art49_3_deployer_pubblico');
+    expect(idObblighi(e)).not.toContain('ob_art111_2_autorita_pubbliche');
+  });
+});
+
+describe('testi allineati al Reg. (UE) 2026/1744', () => {
+  const tutte = () => [...REGOLE!.domande, ...REGOLE!.esiti, ...REGOLE!.trasparenza, ...REGOLE!.obblighi];
+  const voce = (id: string) => tutte().find((v) => v.id === id)! as unknown as Record<string, string>;
+
+  it('art. 4: misure per sostenere l\'alfabetizzazione, senza livello specifico garantito', () => {
+    const o = voce('ob_art4_alfabetizzazione');
+    expect(o.testo).toContain("Adottare misure per sostenere lo sviluppo dell'alfabetizzazione");
+    expect(o.testo).toContain('Non è richiesto di garantire un livello specifico');
+    expect(o.testo).not.toContain('verificare il testo in GU');
+    expect(o.riferimento).toBe('Art. 4(1)');
+  });
+
+  it('art. 49(2): obbligo confermato, contenuti semplificati', () => {
+    const o = voce('ob_art49_2_registrazione_deroga');
+    expect(o.testo).not.toContain('potrebbe aver modificato');
+    expect(o.testo).toContain('Allegato VIII, sezione B, punti 7 e 9 soppressi');
+  });
+
+  it('art. 27(4): rinvio alla DPIA', () => {
+    expect(voce('ob_art27_fria').testo).toContain('(art. 27(4))');
+  });
+
+  it('nuova pratica vietata con le lettere (ba) e (bb)', () => {
+    for (const id of ['vie_ncii', 'es_vietato_ncii', 'ob_art5_ncii_cessazione']) {
+      expect(voce(id).riferimento, id).toBe('Art. 5(1), lett. (ba) e (bb); art. 5(1a)-(1b)');
+    }
+    const aiuto = voce('vie_ncii').aiuto;
+    expect(aiuto).not.toContain('da verificare');
+    expect(aiuto).toContain('ragionevolmente prevedibile');
+    expect(aiuto).toContain('02/12/2026');
+    expect(aiuto).toContain('«spogliano»');
+  });
+
+  it('Allegato I: le macchine sono nella Sezione B', () => {
+    const a = voce('ar1_componente_sicurezza');
+    expect(a.riferimento).toBe('Art. 6(1), All. I, Sez. A');
+    expect(a.testo).not.toContain('macchine');
+    const b = voce('ar1_sezione_b');
+    expect(b.testo).toContain('macchine');
+    expect(b.riferimento).toBe('Art. 6(1), art. 2(2), All. I, Sez. B');
+    const ids = REGOLE!.domande.map((d) => d.id);
+    expect(ids.indexOf('ar1_sezione_b')).toBe(ids.indexOf('ar1_componente_sicurezza') + 1);
+    expect(JSON.stringify(REGOLE!.domande[ids.indexOf('ar1_sezione_b')].mostraSe))
+      .toBe(JSON.stringify(REGOLE!.domande[ids.indexOf('ar1_componente_sicurezza')].mostraSe));
+    const es = REGOLE!.esiti.map((x) => x.id);
+    expect(es.indexOf('es_alto_all1_b')).toBe(es.indexOf('es_alto_all1') + 1);
+    expect(es.indexOf('es_alto_all1_b')).toBeLessThan(es.indexOf('es_deroga'));
+  });
+
+  it('chatbot di terzi col marchio del cliente: il cliente è di norma fornitore (art. 50(1))', () => {
+    expect(voce('tra_interazione').aiuto).toContain('è di norma fornitore (art. 3(3))');
   });
 });

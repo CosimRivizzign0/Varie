@@ -113,7 +113,7 @@ describe('SchedaSistema esistente', () => {
       vie_manipolazione: 'no', vie_vulnerabilita: 'no', vie_punteggio_sociale: 'no', vie_previsione_reati: 'no',
       vie_scraping_volti: 'no', vie_emozioni_lavoro: 'no', vie_categorizzazione_biometrica: 'no',
       vie_identificazione_tempo_reale: 'no', vie_ncii: 'no',
-      ar1_componente_sicurezza: 'no', ar3_biometria: 'no', ar3_infrastrutture_critiche: 'no', ar3_istruzione: 'no',
+      ar1_componente_sicurezza: 'no', ar1_sezione_b: 'no', ar3_biometria: 'no', ar3_infrastrutture_critiche: 'no', ar3_istruzione: 'no',
       ar3_occupazione: 'si', ar3_servizi_pubblici: 'no', ar3_servizi_credito_assicurazioni: 'no', ar3_contrasto: 'no',
       ar3_migrazione: 'no', ar3_giustizia_democrazia: 'no',
       der_compito_procedurale: 'no', der_migliora_attivita_umana: 'no', der_rileva_schemi: 'no',

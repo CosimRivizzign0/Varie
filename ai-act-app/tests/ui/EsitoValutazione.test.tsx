@@ -24,6 +24,7 @@ const BASE: Risposte = {
   vie_identificazione_tempo_reale: 'no',
   vie_ncii: 'no',
   ar1_componente_sicurezza: 'no',
+  ar1_sezione_b: 'no',
   ar3_biometria: 'no',
   ar3_infrastrutture_critiche: 'no',
   ar3_istruzione: 'no',

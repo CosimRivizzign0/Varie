@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { ERRORE_REGOLE, REGOLE } from '../../src/regole/attive';
 
 describe('regole attive (regole/ai-act.json)', () => {
-  it('si caricano senza errori, versione 1.0.0', () => {
+  it('si caricano senza errori, versione 1.1.0', () => {
     expect(ERRORE_REGOLE).toBeNull();
     expect(REGOLE).not.toBeNull();
     expect(REGOLE!.meta.id).toBe('ai-act');
-    expect(REGOLE!.meta.versione).toBe('1.0.0');
+    expect(REGOLE!.meta.versione).toBe('1.1.0');
     expect(REGOLE!.meta.norma).toBe('Reg. (UE) 2024/1689 come modificato dal Reg. (UE) 2026/1744');
   });
 
@@ -16,20 +16,17 @@ describe('regole attive (regole/ai-act.json)', () => {
     for (const d of vie) expect(d.riferimento.startsWith('Art. 5'), d.id).toBe(true);
   });
 
-  it('art. 4, art. 49(2) e la nuova pratica art. 5 sono da_verificare', () => {
+  it('verificate sul testo ufficiale: art. 4, art. 49(2) e la nuova pratica art. 5 tornano in bozza', () => {
     const tutte = [...REGOLE!.domande, ...REGOLE!.esiti, ...REGOLE!.trasparenza, ...REGOLE!.obblighi];
     const stato = (id: string) => tutte.find((v) => v.id === id)?.stato;
-    expect(stato('ob_art4_alfabetizzazione')).toBe('da_verificare');
-    expect(stato('ob_art49_2_registrazione_deroga')).toBe('da_verificare');
-    expect(stato('vie_ncii')).toBe('da_verificare');
-    expect(stato('es_vietato_ncii')).toBe('da_verificare');
-    expect(stato('ob_art5_ncii_cessazione')).toBe('da_verificare');
-    // Nessun'altra voce è da_verificare; nessuna è già validata.
-    const daVerificare = tutte.filter((v) => v.stato === 'da_verificare').map((v) => v.id).sort();
-    expect(daVerificare).toEqual([
-      'es_vietato_ncii', 'ob_art49_2_registrazione_deroga', 'ob_art4_alfabetizzazione',
-      'ob_art5_ncii_cessazione', 'vie_ncii',
-    ]);
+    for (const id of [
+      'ob_art4_alfabetizzazione', 'ob_art49_2_registrazione_deroga', 'vie_ncii', 'es_vietato_ncii',
+      'ob_art5_ncii_cessazione', 'ar1_componente_sicurezza', 'ar1_sezione_b', 'es_alto_all1_b',
+      'ob_all1b_normativa_settore', 'ob_art27_fria', 'ob_art49_3_deployer_pubblico',
+      'ob_art111_2_autorita_pubbliche', 'tra_interazione',
+    ]) expect(stato(id), id).toBe('bozza');
+    // Nessuna voce è più da_verificare; nessuna è già validata.
+    expect(tutte.filter((v) => v.stato === 'da_verificare').map((v) => v.id)).toEqual([]);
     expect(tutte.some((v) => v.stato === 'validata')).toBe(false);
   });
 
@@ -39,6 +36,10 @@ describe('regole attive (regole/ai-act.json)', () => {
       ['alto_rischio', 'da_approfondire', 'minimo', 'non_alto_rischio_deroga', 'vietato'],
     );
     expect(o.dataApplicazione).toBe('2025-02-02');
+  });
+
+  it('meta aggiornata al 2026-10-26', () => {
+    expect(REGOLE!.meta.dataRedazione).toBe('2026-10-26');
   });
 
   it('la nuova pratica art. 5 si applica dal 02/12/2026', () => {
