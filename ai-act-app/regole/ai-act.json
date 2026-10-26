@@ -3414,8 +3414,16 @@
               {
                 "tutte": [
                   {
-                    "risposta": "ruo_ente_pubblico",
-                    "uguale": "si"
+                    "almenoUna": [
+                      {
+                        "risposta": "ruo_ente_pubblico",
+                        "uguale": "si"
+                      },
+                      {
+                        "risposta": "ruo_uso_autorita_pubbliche",
+                        "uguale": "si"
+                      }
+                    ]
                   },
                   {
                     "almenoUna": [
@@ -6632,10 +6640,35 @@
         "importatore"
       ],
       "quando": {
+        "risposta": "ar1_sezione_b",
+        "uguale": "si"
+      },
+      "testo": "Rispettare i requisiti per i sistemi di IA ad alto rischio come integrati nella normativa di settore dell'Allegato I, Sezione B (es. Reg. (UE) 2023/1230 macchine, Reg. (UE) 2018/858 veicoli). Per la parte che ricade nella Sezione B gli obblighi del Capo III dell'AI Act non si applicano direttamente (art. 2(2)); se il sistema rientra anche nella Sezione A o nell'Allegato III, valgono anche gli obblighi elencati per quei casi. Per le macchine i requisiti saranno inseriti nell'Allegato III del Reg. (UE) 2023/1230 con atti delegati applicabili entro il 02/08/2028; per le altre normative della Sezione B i tempi dipendono dagli atti della Commissione previsti dagli artt. 102–109. Se il sistema rientra solo nella Sezione B, non si applicano neppure gli artt. 4 e 50 dell'AI Act (art. 2(2)), che restano applicabili agli altri sistemi di IA dell'organizzazione.",
+      "riferimento": "Art. 2(2), All. I, Sez. B",
+      "dataApplicazione": "2028-08-02",
+      "stato": "bozza"
+    },
+    {
+      "id": "ob_all1b_deployer_info",
+      "classi": [
+        "alto_rischio"
+      ],
+      "soloSeTrasparenza": false,
+      "ruoli": [
+        "deployer",
+        "distributore"
+      ],
+      "quando": {
         "tutte": [
           {
             "risposta": "ar1_sezione_b",
             "uguale": "si"
+          },
+          {
+            "non": {
+              "risposta": "ar1_componente_sicurezza",
+              "uguale": "si"
+            }
           },
           {
             "non": {
@@ -6715,7 +6748,7 @@
           }
         ]
       },
-      "testo": "Rispettare i requisiti per i sistemi di IA ad alto rischio come integrati nella normativa di settore dell'Allegato I, Sezione B (es. Reg. (UE) 2023/1230 macchine, Reg. (UE) 2018/858 veicoli). Per la parte che ricade nella Sezione B gli obblighi del Capo III dell'AI Act non si applicano direttamente (art. 2(2)); se il sistema rientra anche nella Sezione A o nell'Allegato III, valgono anche gli obblighi elencati per quei casi. Per le macchine i requisiti saranno inseriti nell'Allegato III del Reg. (UE) 2023/1230 con atti delegati applicabili entro il 02/08/2028; per le altre normative della Sezione B i tempi dipendono dagli atti della Commissione previsti dagli artt. 102–109. Se il sistema rientra solo nella Sezione B, non si applicano neppure gli artt. 4 e 50 dell'AI Act (art. 2(2)), che restano applicabili agli altri sistemi di IA dell'organizzazione.",
+      "testo": "Per i sistemi che rientrano solo nell'Allegato I, Sezione B, l'AI Act non impone obblighi diretti a deployer e distributori (art. 2(2)): verificare gli obblighi di utilizzatori e distributori previsti dalla normativa di settore (es. Reg. (UE) 2023/1230 macchine).",
       "riferimento": "Art. 2(2), All. I, Sez. B",
       "dataApplicazione": "2028-08-02",
       "stato": "bozza"

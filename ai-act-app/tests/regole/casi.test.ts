@@ -261,12 +261,26 @@ describe('date e ambito: casi aggiuntivi', () => {
     expect(idObblighi(e)).toContain('ob_art50_1_interazione');
   });
 
-  it('Allegato I, Sez. B + Allegato III senza deroga → obblighi Allegato III, senza l\'obbligo della normativa di settore', () => {
+  it('Allegato I, Sez. B + Allegato III senza deroga → obblighi Allegato III, più l\'obbligo della normativa di settore', () => {
     const e = esito({ ar1_sezione_b: 'si', ar3_infrastrutture_critiche: 'si' }, 'fornitore');
     expect(e.classe).toBe('alto_rischio');
     expect(e.dataApplicazioneClasse).toBe('2027-12-02');
     expect(idObblighi(e)).toEqual(expect.arrayContaining([...OBBLIGHI_FORNITORE_ALTO_RISCHIO, 'ob_art49_registrazione']));
-    expect(idObblighi(e)).not.toContain('ob_all1b_normativa_settore');
+    expect(idObblighi(e)).toContain('ob_all1b_normativa_settore');
+  });
+
+  it('solo Sez. B: deployer → solo ob_all1b_deployer_info; fornitore → solo ob_all1b_normativa_settore', () => {
+    const r: Risposte = { ar1_componente_sicurezza: 'no', ar1_sezione_b: 'si' };
+    expect(idObblighi(esito(r, 'deployer'))).toEqual(['ob_all1b_deployer_info']);
+    expect(idObblighi(esito(r, 'fornitore'))).toEqual(['ob_all1b_normativa_settore']);
+    const o = REGOLE!.obblighi.find((x) => x.id === 'ob_all1b_deployer_info')!;
+    expect(o.stato).toBe('bozza');
+    expect(o.dataApplicazione).toBe('2028-08-02');
+  });
+
+  it('All. III punto 4, deployer, ente non pubblico ma uso da autorità pubbliche → FRIA', () => {
+    const e = esito({ ar3_occupazione: 'si', ruo_ente_pubblico: 'no', ruo_uso_autorita_pubbliche: 'si' }, 'deployer');
+    expect(idObblighi(e)).toContain('ob_art27_fria');
   });
 
   it('Allegato I, Sez. B + Allegato III in deroga → alto rischio per la Sez. B, obbligo della normativa di settore', () => {
