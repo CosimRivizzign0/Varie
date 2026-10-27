@@ -1,0 +1,89 @@
+name: ai-act-app
+
+on:
+  push:
+    paths: ['ai-act-app/**', '.github/workflows/ai-act-app.yml']
+  pull_request:
+    paths: ['ai-act-app/**', '.github/workflows/ai-act-app.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ai-act-app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ai-act-app/package.json
+          cache: npm
+          cache-dependency-path: ai-act-app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: 'ai-act-app/src-tauri -> target'
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+      - name: Test crate ai-act-store
+        run: cargo test -p ai-act-store
+        working-directory: ai-act-app/src-tauri
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+        env:
+          CI: 'true'
+      - name: Carica i risultati dei test e2e
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            ai-act-app/test-results
+            ai-act-app/playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
+
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ''
+            name: windows
+            bundle: 'ai-act-app/src-tauri/target/release/bundle/**'
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+            name: macos
+            bundle: 'ai-act-app/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg'
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ai-act-app/package.json
+          cache: npm
+          cache-dependency-path: ai-act-app/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: 'ai-act-app/src-tauri -> target'
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        with:
+          projectPath: ai-act-app
+          args: ${{ matrix.args }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-act-assessment-${{ matrix.name }}
+          path: ${{ matrix.bundle }}
+          if-no-files-found: error
