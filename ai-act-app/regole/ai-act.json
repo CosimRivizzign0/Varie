@@ -25,7 +25,7 @@
       "aiuto": "Rientrano ad esempio i sistemi basati su apprendimento automatico o su logica e conoscenza, che operano con un certo grado di autonomia. Non lo sono i software che eseguono soltanto regole definite interamente da persone (es. un foglio di calcolo con formule fisse o un'automazione «se… allora…»).",
       "riferimento": "Art. 3(1)",
       "mostraSe": null,
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "amb_esclusione",
@@ -45,7 +45,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_manipolazione",
@@ -67,7 +67,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_vulnerabilita",
@@ -89,7 +89,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_punteggio_sociale",
@@ -111,7 +111,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_previsione_reati",
@@ -133,7 +133,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_scraping_volti",
@@ -155,7 +155,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_emozioni_lavoro",
@@ -177,7 +177,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_categorizzazione_biometrica",
@@ -199,7 +199,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_identificazione_tempo_reale",
@@ -221,7 +221,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "vie_ncii",
@@ -243,7 +243,7 @@
           ]
         }
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar1_componente_sicurezza",
@@ -311,7 +311,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar1_sezione_b",
@@ -379,7 +379,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_biometria",
@@ -447,7 +447,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_infrastrutture_critiche",
@@ -515,7 +515,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_istruzione",
@@ -583,7 +583,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_occupazione",
@@ -651,7 +651,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_servizi_pubblici",
@@ -719,7 +719,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_servizi_credito_assicurazioni",
@@ -787,7 +787,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_contrasto",
@@ -855,7 +855,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_migrazione",
@@ -923,7 +923,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ar3_giustizia_democrazia",
@@ -991,7 +991,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "der_compito_procedurale",
@@ -1039,7 +1039,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "der_migliora_attivita_umana",
@@ -1087,7 +1087,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "der_rileva_schemi",
@@ -1135,7 +1135,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "der_compito_preparatorio",
@@ -1183,7 +1183,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "der_profilazione",
@@ -1287,7 +1287,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tra_interazione",
@@ -1355,7 +1355,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tra_contenuti_sintetici",
@@ -1423,7 +1423,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tra_emozioni_biometria",
@@ -1491,7 +1491,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tra_deepfake",
@@ -1559,7 +1559,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tra_testi_pubblici",
@@ -1627,7 +1627,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ruo_marchio",
@@ -1679,7 +1679,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ruo_modifica",
@@ -1731,7 +1731,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ruo_ente_pubblico",
@@ -1813,7 +1813,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ruo_uso_autorita_pubbliche",
@@ -1907,7 +1907,7 @@
           }
         ]
       },
-      "stato": "bozza"
+      "stato": "validata"
     }
   ],
   "esiti": [
@@ -1921,7 +1921,7 @@
       "motivazione": "Il sistema non rientra nella definizione di sistema di IA: il regolamento non si applica.",
       "riferimento": "Art. 3(1)",
       "dataApplicazione": null,
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_fuori_esclusione",
@@ -1933,7 +1933,7 @@
       "motivazione": "Il sistema rientra in un'esclusione dell'art. 2 (uso esclusivamente militare o di sicurezza nazionale, sola ricerca scientifica, sviluppo prima dell'immissione sul mercato, oppure uso da parte del cliente, persona fisica, per un'attività puramente personale e non professionale): il regolamento non si applica a questo uso.",
       "riferimento": "Art. 2",
       "dataApplicazione": null,
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_vietato",
@@ -1977,7 +1977,7 @@
       "motivazione": "Il sistema realizza una pratica di IA vietata dall'art. 5(1): non può essere immesso sul mercato, messo in servizio o usato.",
       "riferimento": "Art. 5(1)",
       "dataApplicazione": "2025-02-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_vietato_ncii",
@@ -1989,7 +1989,7 @@
       "motivazione": "Il sistema realizza la nuova pratica vietata introdotta dal Reg. (UE) 2026/1744 (contenuti intimi non consensuali o materiale pedopornografico).",
       "riferimento": "Art. 5(1), lett. (ba) e (bb); art. 5(1a)-(1b)",
       "dataApplicazione": "2026-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_alto_profilazione",
@@ -2045,7 +2045,7 @@
       "motivazione": "Il sistema rientra in un'area dell'Allegato III ed effettua profilazione di persone fisiche: è sempre ad alto rischio, anche se ricorre una condizione di deroga.",
       "riferimento": "Art. 6(3), ultimo comma",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_alto_all3",
@@ -2127,7 +2127,7 @@
       "motivazione": "Il sistema è usato in un'area dell'Allegato III e non ricorre alcuna condizione di deroga dell'art. 6(3): è ad alto rischio.",
       "riferimento": "Art. 6(2), All. III",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_alto_all1",
@@ -2139,7 +2139,7 @@
       "motivazione": "Il sistema è un prodotto, o il componente di sicurezza di un prodotto, disciplinato dalla normativa dell'Allegato I, Sezione A, e soggetto a valutazione della conformità di terzi: è ad alto rischio.",
       "riferimento": "Art. 6(1), All. I, Sez. A",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_alto_all1_b",
@@ -2151,7 +2151,7 @@
       "motivazione": "Il sistema è un prodotto, o il componente di sicurezza di un prodotto, della normativa dell'Allegato I, Sezione B, soggetto a valutazione di terzi: è ad alto rischio, ma i requisiti si applicano tramite la normativa di settore e non direttamente con il Capo III dell'AI Act.",
       "riferimento": "Art. 6(1), art. 2(2), All. I, Sez. B",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "es_deroga",
@@ -2227,7 +2227,7 @@
       "motivazione": "Il sistema rientra in un'area dell'Allegato III ma svolge solo un compito previsto dall'art. 6(3), senza profilazione: non è considerato ad alto rischio, purché non presenti un rischio significativo per salute, sicurezza o diritti fondamentali.",
       "riferimento": "Art. 6(3)",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     }
   ],
   "trasparenza": [
@@ -2335,7 +2335,7 @@
       },
       "motivazione": "Il sistema interagisce direttamente con persone fisiche: le persone devono sapere che parlano con un sistema di IA.",
       "riferimento": "Art. 50(1)",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tr_contenuti_sintetici",
@@ -2441,7 +2441,7 @@
       },
       "motivazione": "Il sistema genera contenuti sintetici: gli output vanno marcati come generati artificialmente.",
       "riferimento": "Art. 50(2)",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tr_emozioni_biometria",
@@ -2547,7 +2547,7 @@
       },
       "motivazione": "Il sistema riconosce emozioni o effettua categorizzazione biometrica: le persone esposte vanno informate.",
       "riferimento": "Art. 50(3)",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tr_deepfake",
@@ -2653,7 +2653,7 @@
       },
       "motivazione": "Il sistema produce deepfake: va reso noto che il contenuto è generato o manipolato artificialmente.",
       "riferimento": "Art. 50(4)",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "tr_testi_pubblici",
@@ -2759,7 +2759,7 @@
       },
       "motivazione": "Il sistema genera testi pubblicati per informare su questioni di interesse pubblico: va dichiarata la generazione artificiale, salvo controllo editoriale umano.",
       "riferimento": "Art. 50(4), secondo comma",
-      "stato": "bozza"
+      "stato": "validata"
     }
   ],
   "obblighi": [
@@ -2872,7 +2872,7 @@
       "testo": "Adottare misure per sostenere lo sviluppo dell'alfabetizzazione in materia di IA del personale e delle altre persone che si occupano del funzionamento e dell'uso dei sistemi di IA per conto dell'organizzazione, tenendo conto delle loro conoscenze tecniche, esperienza, istruzione e formazione, del contesto d'uso e delle persone su cui i sistemi sono usati. Non è richiesto di garantire un livello specifico di alfabetizzazione di ciascuna persona.",
       "riferimento": "Art. 4(1)",
       "dataApplicazione": "2025-02-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art5_cessazione",
@@ -2925,7 +2925,7 @@
       "testo": "Non immettere sul mercato, non mettere in servizio e non usare il sistema per la pratica vietata; se è già in uso, cessarne l'uso. Le violazioni sono punite con sanzioni fino a 35 milioni di euro o al 7% del fatturato mondiale annuo, se superiore (art. 99(3)).",
       "riferimento": "Art. 5(1)",
       "dataApplicazione": "2025-02-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art5_ncii_cessazione",
@@ -2946,7 +2946,7 @@
       "testo": "Non immettere sul mercato, non mettere in servizio e non usare il sistema per generare o manipolare contenuti intimi non consensuali o materiale pedopornografico; se è già in uso, cessarne l'uso entro il 02/12/2026.",
       "riferimento": "Art. 5(1), lett. (ba) e (bb); art. 5(1a)-(1b)",
       "dataApplicazione": "2026-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art26_deployer",
@@ -3034,7 +3034,7 @@
       "testo": "Usare il sistema secondo le istruzioni per l'uso del fornitore; affidare la sorveglianza umana a persone con competenza, formazione e autorità adeguate; garantire che i dati di input sotto il proprio controllo siano pertinenti e sufficientemente rappresentativi; monitorare il funzionamento e, in caso di rischi o incidenti gravi, informare senza ritardo il fornitore e l'autorità di vigilanza, sospendendo l'uso se necessario; conservare i log generati automaticamente per almeno sei mesi; informare le persone fisiche soggette a decisioni prese o assistite da un sistema dell'Allegato III (art. 26(11)); se si è un'autorità pubblica, usare solo sistemi registrati nella banca dati UE (art. 26(8)).",
       "riferimento": "Art. 26",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art26_deployer_all1",
@@ -3132,7 +3132,7 @@
       "testo": "Usare il sistema secondo le istruzioni per l'uso del fornitore; affidare la sorveglianza umana a persone con competenza, formazione e autorità adeguate; garantire che i dati di input sotto il proprio controllo siano pertinenti e sufficientemente rappresentativi; monitorare il funzionamento e, in caso di rischi o incidenti gravi, informare senza ritardo il fornitore e l'autorità di vigilanza, sospendendo l'uso se necessario; conservare i log generati automaticamente per almeno sei mesi; informare le persone fisiche soggette a decisioni prese o assistite da un sistema dell'Allegato III (art. 26(11)); se si è un'autorità pubblica, usare solo sistemi registrati nella banca dati UE (art. 26(8)).",
       "riferimento": "Art. 26",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art26_7_lavoratori",
@@ -3220,7 +3220,7 @@
       "testo": "Se il sistema è usato sul luogo di lavoro, informare i rappresentanti dei lavoratori e i lavoratori interessati, prima della messa in servizio o dell'uso, che saranno soggetti al sistema.",
       "riferimento": "Art. 26(7)",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art26_7_lavoratori_all1",
@@ -3318,7 +3318,7 @@
       "testo": "Se il sistema è usato sul luogo di lavoro, informare i rappresentanti dei lavoratori e i lavoratori interessati, prima della messa in servizio o dell'uso, che saranno soggetti al sistema.",
       "riferimento": "Art. 26(7)",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art27_fria",
@@ -3470,7 +3470,7 @@
       "testo": "Prima del primo uso, svolgere la valutazione d'impatto sui diritti fondamentali (FRIA): processi in cui il sistema è usato, periodo e frequenza d'uso, categorie di persone interessate, rischi specifici di danno, misure di sorveglianza umana e misure da adottare se i rischi si concretizzano; notificarne i risultati all'autorità di vigilanza del mercato. Obbligatoria per enti pubblici e privati che forniscono servizi pubblici (aree dell'Allegato III tranne il punto 2) e per i sistemi di merito creditizio e assicurazioni vita e malattia (All. III, p. 5(b), 5(c)). Se la valutazione d'impatto sulla protezione dei dati (art. 35 GDPR) copre già alcuni elementi, si può rinviare alle relative sezioni o includerne le parti pertinenti (art. 27(4)).",
       "riferimento": "Art. 27",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art86_spiegazione",
@@ -3598,7 +3598,7 @@
       "testo": "Fornire alle persone interessate da una decisione basata sull'output del sistema, che produca effetti giuridici o incida in modo analogo e significativo sulla loro salute, sicurezza o diritti fondamentali, spiegazioni chiare e significative sul ruolo del sistema nella decisione e sui principali elementi della decisione presa.",
       "riferimento": "Art. 86",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art9_gestione_rischi",
@@ -3686,7 +3686,7 @@
       "testo": "Istituire, attuare, documentare e mantenere un sistema di gestione dei rischi per l'intero ciclo di vita del sistema: individuazione e analisi dei rischi prevedibili, stima e valutazione, misure di gestione mirate e prove.",
       "riferimento": "Art. 9",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art9_gestione_rischi_all1",
@@ -3784,7 +3784,7 @@
       "testo": "Istituire, attuare, documentare e mantenere un sistema di gestione dei rischi per l'intero ciclo di vita del sistema: individuazione e analisi dei rischi prevedibili, stima e valutazione, misure di gestione mirate e prove.",
       "riferimento": "Art. 9",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art10_dati",
@@ -3872,7 +3872,7 @@
       "testo": "Usare per addestramento, convalida e prova insiemi di dati soggetti a pratiche di governance adeguate: pertinenti, sufficientemente rappresentativi e, per quanto possibile, esenti da errori e completi; esaminare e attenuare le possibili distorsioni (bias).",
       "riferimento": "Art. 10",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art10_dati_all1",
@@ -3970,7 +3970,7 @@
       "testo": "Usare per addestramento, convalida e prova insiemi di dati soggetti a pratiche di governance adeguate: pertinenti, sufficientemente rappresentativi e, per quanto possibile, esenti da errori e completi; esaminare e attenuare le possibili distorsioni (bias).",
       "riferimento": "Art. 10",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art11_documentazione_tecnica",
@@ -4058,7 +4058,7 @@
       "testo": "Redigere la documentazione tecnica prima dell'immissione sul mercato o della messa in servizio, con i contenuti dell'Allegato IV, e tenerla aggiornata.",
       "riferimento": "Art. 11",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art11_documentazione_tecnica_all1",
@@ -4156,7 +4156,7 @@
       "testo": "Redigere la documentazione tecnica prima dell'immissione sul mercato o della messa in servizio, con i contenuti dell'Allegato IV, e tenerla aggiornata.",
       "riferimento": "Art. 11",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art12_log",
@@ -4244,7 +4244,7 @@
       "testo": "Progettare il sistema in modo che registri automaticamente gli eventi (log) per tutto il suo ciclo di vita, a fini di tracciabilità.",
       "riferimento": "Art. 12",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art12_log_all1",
@@ -4342,7 +4342,7 @@
       "testo": "Progettare il sistema in modo che registri automaticamente gli eventi (log) per tutto il suo ciclo di vita, a fini di tracciabilità.",
       "riferimento": "Art. 12",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art13_istruzioni",
@@ -4430,7 +4430,7 @@
       "testo": "Progettare il sistema in modo sufficientemente trasparente da consentire ai deployer di interpretarne e usarne correttamente l'output, e fornire istruzioni per l'uso complete, corrette e chiare.",
       "riferimento": "Art. 13",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art13_istruzioni_all1",
@@ -4528,7 +4528,7 @@
       "testo": "Progettare il sistema in modo sufficientemente trasparente da consentire ai deployer di interpretarne e usarne correttamente l'output, e fornire istruzioni per l'uso complete, corrette e chiare.",
       "riferimento": "Art. 13",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art14_sorveglianza_umana",
@@ -4616,7 +4616,7 @@
       "testo": "Progettare il sistema in modo che possa essere efficacemente supervisionato da persone fisiche durante l'uso, con misure di sorveglianza umana proporzionate ai rischi (compresa la possibilità di ignorarne l'output o di interromperlo).",
       "riferimento": "Art. 14",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art14_sorveglianza_umana_all1",
@@ -4714,7 +4714,7 @@
       "testo": "Progettare il sistema in modo che possa essere efficacemente supervisionato da persone fisiche durante l'uso, con misure di sorveglianza umana proporzionate ai rischi (compresa la possibilità di ignorarne l'output o di interromperlo).",
       "riferimento": "Art. 14",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art15_accuratezza",
@@ -4802,7 +4802,7 @@
       "testo": "Garantire un livello adeguato di accuratezza, robustezza e cibersicurezza per tutto il ciclo di vita, dichiarando i livelli di accuratezza nelle istruzioni per l'uso.",
       "riferimento": "Art. 15",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art15_accuratezza_all1",
@@ -4900,7 +4900,7 @@
       "testo": "Garantire un livello adeguato di accuratezza, robustezza e cibersicurezza per tutto il ciclo di vita, dichiarando i livelli di accuratezza nelle istruzioni per l'uso.",
       "riferimento": "Art. 15",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art16_obblighi_fornitore",
@@ -4988,7 +4988,7 @@
       "testo": "Rispettare gli obblighi generali del fornitore: conformità ai requisiti degli artt. 8–15; indicazione di nome e indirizzo sul sistema, sull'imballaggio o nei documenti; conservazione della documentazione e dei log; azioni correttive e informazione delle autorità; requisiti di accessibilità.",
       "riferimento": "Art. 16",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art16_obblighi_fornitore_all1",
@@ -5086,7 +5086,7 @@
       "testo": "Rispettare gli obblighi generali del fornitore: conformità ai requisiti degli artt. 8–15; indicazione di nome e indirizzo sul sistema, sull'imballaggio o nei documenti; conservazione della documentazione e dei log; azioni correttive e informazione delle autorità; requisiti di accessibilità.",
       "riferimento": "Art. 16",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art17_qualita",
@@ -5174,7 +5174,7 @@
       "testo": "Istituire un sistema di gestione della qualità documentato (politiche, procedure e istruzioni scritte), proporzionato alle dimensioni dell'organizzazione.",
       "riferimento": "Art. 17",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art17_qualita_all1",
@@ -5272,7 +5272,7 @@
       "testo": "Istituire un sistema di gestione della qualità documentato (politiche, procedure e istruzioni scritte), proporzionato alle dimensioni dell'organizzazione.",
       "riferimento": "Art. 17",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art43_conformita",
@@ -5360,7 +5360,7 @@
       "testo": "Sottoporre il sistema alla procedura di valutazione della conformità applicabile (controllo interno o intervento di un organismo notificato, secondo i casi) prima dell'immissione sul mercato o della messa in servizio. Se il sistema rientra anche nell'Allegato I, Sezione A, si segue la procedura di valutazione prevista da quella normativa (art. 43(3)).",
       "riferimento": "Art. 43",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art43_conformita_all1",
@@ -5458,7 +5458,7 @@
       "testo": "Sottoporre il sistema alla procedura di valutazione della conformità applicabile (controllo interno o intervento di un organismo notificato, secondo i casi) prima dell'immissione sul mercato o della messa in servizio.",
       "riferimento": "Art. 43",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art47_48_dichiarazione_ce",
@@ -5546,7 +5546,7 @@
       "testo": "Redigere la dichiarazione di conformità UE e apporre la marcatura CE sul sistema (o, se non è possibile, sull'imballaggio o nei documenti di accompagnamento; marcatura digitale per i sistemi forniti solo in forma digitale).",
       "riferimento": "Art. 47, 48",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art47_48_dichiarazione_ce_all1",
@@ -5644,7 +5644,7 @@
       "testo": "Redigere la dichiarazione di conformità UE e apporre la marcatura CE sul sistema (o, se non è possibile, sull'imballaggio o nei documenti di accompagnamento; marcatura digitale per i sistemi forniti solo in forma digitale).",
       "riferimento": "Art. 47, 48",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art49_registrazione",
@@ -5732,7 +5732,7 @@
       "testo": "Registrare sé stesso e il sistema nella banca dati UE prima dell'immissione sul mercato o della messa in servizio (per i sistemi dell'All. III, p. 2, la registrazione avviene a livello nazionale).",
       "riferimento": "Art. 49(1)",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art49_3_deployer_pubblico",
@@ -5864,7 +5864,7 @@
       "testo": "Prima di mettere in servizio o usare il sistema, le autorità pubbliche, le istituzioni, organi e organismi dell'Unione e chi agisce per loro conto devono registrarsi, selezionare il sistema e registrarne l'uso nella banca dati UE (esclusi i sistemi dell'Allegato III, punto 2). L'art. 49 si applica formalmente dal 02/08/2026, ma l'obbligo sorge con la classificazione ai sensi dell'art. 6(2), applicabile dal 02/12/2027.",
       "riferimento": "Art. 49(3)",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art111_2_autorita_pubbliche",
@@ -5883,7 +5883,7 @@
       "testo": "Solo per sistemi destinati a essere usati da autorità pubbliche e già immessi sul mercato o messi in servizio prima della data di applicazione del Capo III (02/12/2027 per l'Allegato III, 02/08/2028 per l'Allegato I): fornitori e deployer devono adeguarli ai requisiti e agli obblighi del Regolamento entro il 02/08/2030, anche in assenza di modifiche significative. Per i sistemi immessi o messi in servizio dopo tali date gli obblighi si applicano dalle date ordinarie.",
       "riferimento": "Art. 111(2)",
       "dataApplicazione": "2030-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art72_monitoraggio",
@@ -5971,7 +5971,7 @@
       "testo": "Istituire e documentare un sistema di monitoraggio successivo all'immissione sul mercato, che raccolga e analizzi i dati sulle prestazioni del sistema per tutta la sua durata.",
       "riferimento": "Art. 72",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art72_monitoraggio_all1",
@@ -6069,7 +6069,7 @@
       "testo": "Istituire e documentare un sistema di monitoraggio successivo all'immissione sul mercato, che raccolga e analizzi i dati sulle prestazioni del sistema per tutta la sua durata.",
       "riferimento": "Art. 72",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art73_incidenti",
@@ -6157,7 +6157,7 @@
       "testo": "Segnalare gli incidenti gravi alle autorità di vigilanza del mercato degli Stati membri in cui si sono verificati, subito dopo aver accertato il nesso con il sistema e comunque entro 15 giorni (termini più brevi per i casi più gravi).",
       "riferimento": "Art. 73",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art73_incidenti_all1",
@@ -6255,7 +6255,7 @@
       "testo": "Segnalare gli incidenti gravi alle autorità di vigilanza del mercato degli Stati membri in cui si sono verificati, subito dopo aver accertato il nesso con il sistema e comunque entro 15 giorni (termini più brevi per i casi più gravi).",
       "riferimento": "Art. 73",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art23_importatore",
@@ -6343,7 +6343,7 @@
       "testo": "Prima di immettere il sistema sul mercato, verificare che il fornitore abbia svolto la valutazione della conformità, redatto la documentazione tecnica e nominato un rappresentante autorizzato, e che il sistema rechi la marcatura CE con la dichiarazione di conformità UE e le istruzioni per l'uso; indicare il proprio nome e indirizzo; non immettere sul mercato sistemi non conformi; conservare per 10 anni i documenti richiesti e cooperare con le autorità.",
       "riferimento": "Art. 23",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art23_importatore_all1",
@@ -6441,7 +6441,7 @@
       "testo": "Prima di immettere il sistema sul mercato, verificare che il fornitore abbia svolto la valutazione della conformità, redatto la documentazione tecnica e nominato un rappresentante autorizzato, e che il sistema rechi la marcatura CE con la dichiarazione di conformità UE e le istruzioni per l'uso; indicare il proprio nome e indirizzo; non immettere sul mercato sistemi non conformi; conservare per 10 anni i documenti richiesti e cooperare con le autorità.",
       "riferimento": "Art. 23",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art24_distributore",
@@ -6529,7 +6529,7 @@
       "testo": "Prima di mettere il sistema a disposizione sul mercato, verificare che rechi la marcatura CE, sia accompagnato dalla dichiarazione di conformità UE e dalle istruzioni per l'uso, e che fornitore e importatore abbiano adempiuto ai rispettivi obblighi; non mettere a disposizione sistemi ritenuti non conformi; adottare azioni correttive e cooperare con le autorità.",
       "riferimento": "Art. 24",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art24_distributore_all1",
@@ -6627,7 +6627,7 @@
       "testo": "Prima di mettere il sistema a disposizione sul mercato, verificare che rechi la marcatura CE, sia accompagnato dalla dichiarazione di conformità UE e dalle istruzioni per l'uso, e che fornitore e importatore abbiano adempiuto ai rispettivi obblighi; non mettere a disposizione sistemi ritenuti non conformi; adottare azioni correttive e cooperare con le autorità.",
       "riferimento": "Art. 24",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_all1b_normativa_settore",
@@ -6646,7 +6646,7 @@
       "testo": "Rispettare i requisiti per i sistemi di IA ad alto rischio come integrati nella normativa di settore dell'Allegato I, Sezione B (es. Reg. (UE) 2023/1230 macchine, Reg. (UE) 2018/858 veicoli). Per la parte che ricade nella Sezione B gli obblighi del Capo III dell'AI Act non si applicano direttamente (art. 2(2)); se il sistema rientra anche nella Sezione A o nell'Allegato III, valgono anche gli obblighi elencati per quei casi. Per le macchine i requisiti saranno inseriti nell'Allegato III del Reg. (UE) 2023/1230 con atti delegati applicabili entro il 02/08/2028; per le altre normative della Sezione B i tempi dipendono dagli atti della Commissione previsti dagli artt. 102–109. Se il sistema rientra solo nella Sezione B, non si applicano neppure gli artt. 4 e 50 dell'AI Act (art. 2(2)), che restano applicabili agli altri sistemi di IA dell'organizzazione.",
       "riferimento": "Art. 2(2), All. I, Sez. B",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_all1b_deployer_info",
@@ -6751,7 +6751,7 @@
       "testo": "Per i sistemi che rientrano solo nell'Allegato I, Sezione B, l'AI Act non impone obblighi diretti a deployer e distributori (art. 2(2)): verificare gli obblighi di utilizzatori e distributori previsti dalla normativa di settore (es. Reg. (UE) 2023/1230 macchine).",
       "riferimento": "Art. 2(2), All. I, Sez. B",
       "dataApplicazione": "2028-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art6_4_documentazione_deroga",
@@ -6766,7 +6766,7 @@
       "testo": "Documentare, prima dell'immissione sul mercato o della messa in servizio, la valutazione con cui si conclude che il sistema non è ad alto rischio, e fornirla alle autorità nazionali competenti su richiesta.",
       "riferimento": "Art. 6(4)",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art49_2_registrazione_deroga",
@@ -6781,7 +6781,7 @@
       "testo": "Registrare sé stesso e il sistema nella banca dati UE prima dell'immissione sul mercato o della messa in servizio, anche se si è concluso che il sistema non è ad alto rischio ai sensi dell'art. 6(3). I contenuti da registrare sono semplificati (Allegato VIII, sezione B, punti 7 e 9 soppressi dal Reg. (UE) 2026/1744). L'art. 49 si applica formalmente dal 02/08/2026, ma l'obbligo sorge con la classificazione ai sensi dell'art. 6(3), applicabile dal 02/12/2027.",
       "riferimento": "Art. 49(2)",
       "dataApplicazione": "2027-12-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art50_1_interazione",
@@ -6802,7 +6802,7 @@
       "testo": "Progettare il sistema in modo che le persone che vi interagiscono siano informate, in modo chiaro e distinguibile e al più tardi alla prima interazione, che stanno interagendo con un sistema di IA, salvo che ciò sia evidente dal contesto.",
       "riferimento": "Art. 50(1)",
       "dataApplicazione": "2026-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art50_2_marcatura",
@@ -6823,7 +6823,7 @@
       "testo": "Marcare gli output (audio, immagini, video, testo) in un formato leggibile dalle macchine e rilevabile come generato o manipolato artificialmente, con soluzioni tecniche efficaci, interoperabili, solide e affidabili. Per i sistemi immessi sul mercato prima del 02/08/2026 il termine è il 02/12/2026 (da verificare sul testo in GU).",
       "riferimento": "Art. 50(2)",
       "dataApplicazione": "2026-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art50_3_emozioni_biometria",
@@ -6844,7 +6844,7 @@
       "testo": "Informare le persone esposte del funzionamento del sistema di riconoscimento delle emozioni o di categorizzazione biometrica e trattare i dati personali nel rispetto del GDPR.",
       "riferimento": "Art. 50(3)",
       "dataApplicazione": "2026-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art50_4_deepfake",
@@ -6865,7 +6865,7 @@
       "testo": "Rendere noto che il contenuto (immagine, audio o video) è stato generato o manipolato artificialmente. Per opere palesemente artistiche, creative, satiriche o di finzione basta una segnalazione che non ostacoli la fruizione dell'opera.",
       "riferimento": "Art. 50(4)",
       "dataApplicazione": "2026-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     },
     {
       "id": "ob_art50_4_testi_pubblici",
@@ -6886,7 +6886,7 @@
       "testo": "Rendere noto che il testo è stato generato o manipolato artificialmente, salvo che sia stato sottoposto a revisione umana o a controllo editoriale e che una persona fisica o giuridica ne abbia la responsabilità editoriale.",
       "riferimento": "Art. 50(4), secondo comma",
       "dataApplicazione": "2026-08-02",
-      "stato": "bozza"
+      "stato": "validata"
     }
   ]
 }

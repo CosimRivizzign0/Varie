@@ -274,7 +274,7 @@ describe('date e ambito: casi aggiuntivi', () => {
     expect(idObblighi(esito(r, 'deployer'))).toEqual(['ob_all1b_deployer_info']);
     expect(idObblighi(esito(r, 'fornitore'))).toEqual(['ob_all1b_normativa_settore']);
     const o = REGOLE!.obblighi.find((x) => x.id === 'ob_all1b_deployer_info')!;
-    expect(o.stato).toBe('bozza');
+    expect(o.stato).toBe('validata');
     expect(o.dataApplicazione).toBe('2028-08-02');
   });
 
@@ -355,7 +355,7 @@ describe('autorità pubbliche (artt. 49(3) e 111(2))', () => {
     const d = REGOLE!.domande.find((x) => x.id === 'ruo_uso_autorita_pubbliche')!;
     expect(d.sezione).toBe('ruolo');
     expect(d.riferimento).toBe('Art. 111(2), art. 49(3)');
-    expect(d.stato).toBe('bozza');
+    expect(d.stato).toBe('validata');
   });
 
   it('All. III punto 4 + uso da autorità pubbliche, deployer → artt. 49(3) e 111(2)', () => {
@@ -477,12 +477,12 @@ describe('testi allineati al Reg. (UE) 2026/1744', () => {
     expect(voce('vie_ncii').aiuto).toContain("Per il fornitore rileva anche un risultato ottenibile senza modifiche tecniche significative. Non è manipolazione la modifica che non aumenta l'esposizione delle parti intime né altera la natura delle attività sessuali raffigurate (art. 5(1b)). Il consenso deve essere libero, specifico, informato, inequivocabile ed esplicito.");
   });
 
-  it('voci toccate in stato bozza', () => {
+  it('voci toccate sono validate', () => {
     for (const id of ['ruo_uso_autorita_pubbliche', 'ob_art111_2_autorita_pubbliche', 'ob_art4_alfabetizzazione',
       'ob_all1b_normativa_settore', 'ob_art49_3_deployer_pubblico', 'ar1_componente_sicurezza', 'ar1_sezione_b',
       'tra_interazione', 'ob_art43_conformita', 'ob_art49_2_registrazione_deroga', 'vie_ncii', 'ob_art27_fria',
       'tr_interazione', 'tr_contenuti_sintetici', 'tr_emozioni_biometria', 'tr_deepfake', 'tr_testi_pubblici']) {
-      expect(voce(id).stato, id).toBe('bozza');
+      expect(voce(id).stato, id).toBe('validata');
     }
   });
 

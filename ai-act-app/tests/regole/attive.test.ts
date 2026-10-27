@@ -16,7 +16,7 @@ describe('regole attive (regole/ai-act.json)', () => {
     for (const d of vie) expect(d.riferimento.startsWith('Art. 5'), d.id).toBe(true);
   });
 
-  it('verificate sul testo ufficiale: art. 4, art. 49(2) e la nuova pratica art. 5 tornano in bozza', () => {
+  it('verificate sul testo ufficiale: art. 4, art. 49(2) e la nuova pratica art. 5 sono validate', () => {
     const tutte = [...REGOLE!.domande, ...REGOLE!.esiti, ...REGOLE!.trasparenza, ...REGOLE!.obblighi];
     const stato = (id: string) => tutte.find((v) => v.id === id)?.stato;
     for (const id of [
@@ -24,10 +24,10 @@ describe('regole attive (regole/ai-act.json)', () => {
       'ob_art5_ncii_cessazione', 'ar1_componente_sicurezza', 'ar1_sezione_b', 'es_alto_all1_b',
       'ob_all1b_normativa_settore', 'ob_art27_fria', 'ob_art49_3_deployer_pubblico',
       'ob_art111_2_autorita_pubbliche', 'tra_interazione',
-    ]) expect(stato(id), id).toBe('bozza');
-    // Nessuna voce è più da_verificare; nessuna è già validata.
+    ]) expect(stato(id), id).toBe('validata');
+    // Nessuna voce è da_verificare né in bozza: tutte validate dal consulente.
     expect(tutte.filter((v) => v.stato === 'da_verificare').map((v) => v.id)).toEqual([]);
-    expect(tutte.some((v) => v.stato === 'validata')).toBe(false);
+    expect(tutte.filter((v) => v.stato !== 'validata').map((v) => v.id)).toEqual([]);
   });
 
   it("l'art. 4 si applica a tutte le classi tranne fuori_ambito", () => {

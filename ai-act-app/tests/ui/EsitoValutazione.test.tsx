@@ -73,21 +73,23 @@ function rotteConQuestionario() {
   );
 }
 
-async function preparato(modifiche: Risposte | null) {
+async function preparato(modifiche: Risposte | null, nonValidate = 0) {
   const repo: Repository = await nuovoRepository();
   const c = await repo.creaCliente(clienteValido());
   const s = await repo.creaSistema(c.id, sistema);
   const v = await repo.avviaValutazione(s.id, '1.0.0');
   if (modifiche) {
     const r = { ...BASE, ...modifiche };
-    await repo.salvaRisposte(v.id, r, calcolaEsito(REGOLE!, r, 'deployer'), REGOLE!.meta.versione);
+    const esito = calcolaEsito(REGOLE!, r, 'deployer');
+    // Simula una voce usata non validata (es. esito calcolato con regole precedenti).
+    await repo.salvaRisposte(v.id, r, { ...esito, vociNonValidate: nonValidate }, REGOLE!.meta.versione);
   }
   return { repo, s, v };
 }
 
 describe('EsitoValutazione', () => {
   it('mostra classe, trasparenza, data, motivazione, obblighi e avviso regole non validate', async () => {
-    const { repo, s } = await preparato({ ar3_occupazione: 'si', tra_interazione: 'si' });
+    const { repo, s } = await preparato({ ar3_occupazione: 'si', tra_interazione: 'si' }, 3);
     renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
     expect(await screen.findByText('Alto rischio')).toBeInTheDocument();
     expect(screen.getByText('+ obblighi di trasparenza')).toBeInTheDocument();
@@ -97,6 +99,13 @@ describe('EsitoValutazione', () => {
     expect(screen.getByRole('columnheader', { name: 'Dal' })).toBeInTheDocument();
     expect(screen.getByText(/^Regole non ancora validate \(\d+ di \d+\): verificare l'esito prima di consegnarlo\.$/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Chatbot' })).toBeInTheDocument();
+  });
+
+  it('con tutte le voci usate validate non mostra l\'avviso regole non validate', async () => {
+    const { repo, s } = await preparato({ ar3_occupazione: 'si', tra_interazione: 'si' });
+    renderizza(rotte(), repo, `/sistemi/${s.id}/valutazione/esito`);
+    expect(await screen.findByText('Alto rischio')).toBeInTheDocument();
+    expect(screen.queryByText(/Regole non ancora validate/)).toBeNull();
   });
 
   it('conferma la classificazione e mostra lo stato confermato', async () => {
